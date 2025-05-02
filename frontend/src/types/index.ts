@@ -59,6 +59,28 @@ export interface TaskDto {
   updatedAt?: string;
 }
 
+// Task Filter Types
+export interface TaskFilterDto {
+  searchTerm?: string;
+  priority?: Priority;
+  categoryId?: number;
+  completed?: boolean;
+  startDate?: string;
+  endDate?: string;
+  sortBy?: string;
+  sortDirection?: 'asc' | 'desc';
+}
+
+// Task Reminder Types
+export interface TaskReminderDto {
+  taskId: number;
+  taskTitle?: string;
+  dueDate?: string;
+  reminderType: 'EMAIL' | 'NOTIFICATION';
+  reminderTime: string;
+  sent?: boolean;
+}
+
 // Category Types
 export interface CategoryDto {
   id?: number;
@@ -75,4 +97,13 @@ export interface DashboardDto {
   overdueTasks: number;
   upcomingTasks: TaskDto[];
   categories: CategoryDto[];
+  // Enhanced dashboard data
+  tasksByCategory?: Record<string, number>;
+  tasksByPriority?: Record<string, number>;
+  tasksByMonth?: Record<string, number>;
+  recentTasks?: TaskDto[];
+  upcomingDeadlines?: TaskDto[];
+  completionRate?: number;
+  taskCompletionTrend?: Record<string, number>;
+  averageCompletionTimeInDays?: number;
 }

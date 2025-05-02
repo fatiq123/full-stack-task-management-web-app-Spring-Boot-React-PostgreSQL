@@ -6,6 +6,8 @@ import {
   UserDto, 
   PasswordChangeRequest,
   TaskDto,
+  TaskFilterDto,
+  TaskReminderDto,
   CategoryDto,
   DashboardDto
 } from '../types';
@@ -103,6 +105,26 @@ export const taskApi = {
   
   toggleTaskCompletion: (id: number) => 
     api.patch<TaskDto>(`/tasks/${id}/toggle-completion`),
+    
+  // New methods for filtering and sorting
+  filterTasks: (filter: TaskFilterDto, page: number = 0, size: number = 10) => 
+    api.post<{ content: TaskDto[], totalElements: number, totalPages: number }>
+      (`/tasks/filter?page=${page}&size=${size}`, filter),
+      
+  getUpcomingTasks: (days: number = 7) => 
+    api.get<TaskDto[]>(`/tasks/upcoming?days=${days}`),
+};
+
+// Task Reminder API
+export const reminderApi = {
+  getUserReminders: () => 
+    api.get<TaskReminderDto[]>('/reminders'),
+    
+  createReminder: (reminder: TaskReminderDto) => 
+    api.post<TaskReminderDto>('/reminders', reminder),
+    
+  deleteReminder: (id: number) => 
+    api.delete(`/reminders/${id}`),
 };
 
 // Category API
