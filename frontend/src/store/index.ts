@@ -4,6 +4,7 @@ import userReducer from './userSlice';
 import taskReducer from './taskSlice';
 import categoryReducer from './categorySlice';
 import dashboardReducer from './dashboardSlice';
+import profileReducer from './profileSlice';
 
 export const store = configureStore({
   reducer: {
@@ -12,6 +13,7 @@ export const store = configureStore({
     tasks: taskReducer,
     categories: categoryReducer,
     dashboard: dashboardReducer,
+    profile: profileReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

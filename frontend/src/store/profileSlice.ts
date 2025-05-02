@@ -1,11 +1,11 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import api from '../services/api';
+import { userApi } from '../services/api';
 
 export interface UserProfile {
   id?: number;
-  username: string;
-  email: string;
-  name: string;
+  username?: string;
+  email?: string;
+  name?: string;
 }
 
 interface ProfileState {
@@ -19,14 +19,14 @@ const initialState: ProfileState = {
   profile: null,
   loading: false,
   error: null,
-  success: null,
+  success: null
 };
 
 export const fetchUserProfile = createAsyncThunk(
-  'profile/fetchUserProfile',
+  'profile/fetchProfile',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await api.get('/users/profile');
+      const response = await userApi.getProfile();
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch profile');
@@ -34,11 +34,11 @@ export const fetchUserProfile = createAsyncThunk(
   }
 );
 
-export const updateProfile = createAsyncThunk(
+export const updateUserProfile = createAsyncThunk(
   'profile/updateProfile',
-  async (profileData: { name: string; email: string }, { rejectWithValue }) => {
+  async (profileData: UserProfile, { rejectWithValue }) => {
     try {
-      const response = await api.put('/users/profile', profileData);
+      const response = await userApi.updateProfile(profileData);
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Failed to update profile');
@@ -46,14 +46,14 @@ export const updateProfile = createAsyncThunk(
   }
 );
 
-export const updatePassword = createAsyncThunk(
-  'profile/updatePassword',
+export const changePassword = createAsyncThunk(
+  'profile/changePassword',
   async (passwordData: { currentPassword: string; newPassword: string }, { rejectWithValue }) => {
     try {
-      const response = await api.put('/users/password', passwordData);
+      const response = await userApi.changePassword(passwordData);
       return response.data;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to update password');
+      return rejectWithValue(error.response?.data?.message || 'Failed to change password');
     }
   }
 );
@@ -62,10 +62,12 @@ const profileSlice = createSlice({
   name: 'profile',
   initialState,
   reducers: {
-    clearProfileMessages: (state) => {
+    clearProfileError: (state) => {
       state.error = null;
-      state.success = null;
     },
+    clearProfileSuccess: (state) => {
+      state.success = null;
+    }
   },
   extraReducers: (builder) => {
     builder
@@ -84,37 +86,38 @@ const profileSlice = createSlice({
       })
       
       // Update profile
-      .addCase(updateProfile.pending, (state) => {
+      .addCase(updateUserProfile.pending, (state) => {
         state.loading = true;
         state.error = null;
         state.success = null;
       })
-      .addCase(updateProfile.fulfilled, (state, action: PayloadAction<UserProfile>) => {
+      .addCase(updateUserProfile.fulfilled, (state, action: PayloadAction<UserProfile>) => {
         state.loading = false;
         state.profile = action.payload;
         state.success = 'Profile updated successfully';
       })
-      .addCase(updateProfile.rejected, (state, action) => {
+      .addCase(updateUserProfile.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })
       
-      // Update password
-      .addCase(updatePassword.pending, (state) => {
+      // Change password
+      .addCase(changePassword.pending, (state) => {
         state.loading = true;
         state.error = null;
         state.success = null;
       })
-      .addCase(updatePassword.fulfilled, (state) => {
+      .addCase(changePassword.fulfilled, (state) => {
         state.loading = false;
-        state.success = 'Password updated successfully';
+        state.success = 'Password changed successfully';
       })
-      .addCase(updatePassword.rejected, (state, action) => {
+      .addCase(changePassword.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });
-  },
+  }
 });
 
-export const { clearProfileMessages } = profileSlice.actions;
+export const { clearProfileError, clearProfileSuccess } = profileSlice.actions;
+
 export default profileSlice.reducer;

@@ -247,8 +247,8 @@ const EnhancedTaskList: React.FC = () => {
     }
   };
   
-  const isOverdue = (dueDate: string, completed: boolean) => {
-    return !completed && new Date(dueDate) < new Date();
+  const isOverdue = (dueDate: string, completed: boolean | undefined) => {
+    return completed === false && new Date(dueDate) < new Date();
   };
   
   const displayedTasks = filterApplied ? filteredTasks : tasks;
@@ -396,7 +396,7 @@ interface TaskListContentProps {
   handleToggleCompletion: (taskId: number) => void;
   handleOpenMenu: (event: React.MouseEvent<HTMLElement>, taskId: number) => void;
   getPriorityColor: (priority: Priority) => "error" | "warning" | "success" | "default";
-  isOverdue: (dueDate: string, completed: boolean) => boolean;
+  isOverdue: (dueDate: string, completed: boolean | undefined) => boolean;
 }
 
 const TaskListContent: React.FC<TaskListContentProps> = ({

@@ -1,32 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
-  TextField,
   Box,
   Typography,
+  Button,
   List,
   ListItem,
   ListItemText,
   IconButton,
+  Divider,
   Paper,
-  Divider
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Stack,
+  Chip,
+  CircularProgress,
+  Alert,
 } from '@mui/material';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import DeleteIcon from '@mui/icons-material/Delete';
-import NotificationsIcon from '@mui/icons-material/Notifications';
-import EmailIcon from '@mui/icons-material/Email';
-import { TaskDto, TaskReminderDto } from '../types';
+import {
+  Add as AddIcon,
+  Delete as DeleteIcon,
+  Email as EmailIcon,
+  Notifications as NotificationsIcon,
+} from '@mui/icons-material';
 import { format } from 'date-fns';
+import { TaskDto, TaskReminderDto, ReminderType } from '../types';
 import { reminderApi } from '../services/api';
 
 interface TaskReminderProps {
@@ -36,158 +42,175 @@ interface TaskReminderProps {
   onReminderDeleted: () => void;
 }
 
-const TaskReminder: React.FC<TaskReminderProps> = ({ 
-  task, 
-  reminders, 
-  onReminderAdded, 
-  onReminderDeleted 
+const TaskReminder: React.FC<TaskReminderProps> = ({
+  task,
+  reminders,
+  onReminderAdded,
+  onReminderDeleted,
 }) => {
   const [open, setOpen] = useState(false);
-  const [reminderType, setReminderType] = useState<'EMAIL' | 'NOTIFICATION'>('EMAIL');
   const [reminderTime, setReminderTime] = useState<Date | null>(new Date());
+  const [reminderType, setReminderType] = useState<ReminderType>(ReminderType.EMAIL);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   const handleOpen = () => {
     setOpen(true);
+    setReminderTime(new Date());
+    setReminderType(ReminderType.EMAIL);
+    setError(null);
+    setSuccess(null);
   };
 
   const handleClose = () => {
     setOpen(false);
   };
 
-  const handleSubmit = async () => {
-    if (!reminderTime) return;
-    
+  const handleAddReminder = async () => {
+    if (!reminderTime) {
+      setError('Please select a reminder time');
+      return;
+    }
+
     setLoading(true);
+    setError(null);
     try {
       const reminderDto: TaskReminderDto = {
         taskId: task.id!,
         reminderType,
-        reminderTime: reminderTime.toISOString()
+        reminderTime: reminderTime.toISOString(),
+        reminderSent: false
       };
       
       await reminderApi.createReminder(reminderDto);
+      setSuccess('Reminder added successfully');
       onReminderAdded();
-      handleClose();
-    } catch (error) {
-      console.error('Error creating reminder:', error);
+      setTimeout(() => {
+        handleClose();
+      }, 1500);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to add reminder');
     } finally {
       setLoading(false);
     }
   };
 
   const handleDeleteReminder = async (id: number) => {
+    setLoading(true);
     try {
       await reminderApi.deleteReminder(id);
       onReminderDeleted();
-    } catch (error) {
-      console.error('Error deleting reminder:', error);
+    } catch (err: any) {
+      console.error('Failed to delete reminder:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <Box mt={3}>
-      <Paper sx={{ p: 2 }}>
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-          <Typography variant="h6">
-            <NotificationsIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-            Task Reminders
-          </Typography>
-          <Button 
-            variant="contained" 
-            color="primary" 
-            onClick={handleOpen}
-            startIcon={<NotificationsIcon />}
-          >
-            Add Reminder
-          </Button>
-        </Box>
+    <Paper sx={{ p: 3, mt: 3 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Typography variant="h6">Reminders</Typography>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={handleOpen}
+          disabled={loading}
+        >
+          Add Reminder
+        </Button>
+      </Box>
 
-        {reminders.length > 0 ? (
-          <List>
-            {reminders.map((reminder, index) => (
-              <React.Fragment key={index}>
-                {index > 0 && <Divider />}
-                <ListItem
-                  secondaryAction={
-                    <IconButton 
-                      edge="end" 
-                      aria-label="delete"
-                      onClick={() => handleDeleteReminder(reminder.taskId)}
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  }
-                >
-                  <ListItemText
-                    primary={
-                      <Box display="flex" alignItems="center">
-                        {reminder.reminderType === 'EMAIL' ? 
-                          <EmailIcon color="primary" sx={{ mr: 1 }} /> : 
-                          <NotificationsIcon color="secondary" sx={{ mr: 1 }} />
-                        }
-                        <Typography variant="body1">
-                          {reminder.reminderType} Reminder
-                        </Typography>
-                      </Box>
-                    }
-                    secondary={
-                      <Typography variant="body2" color="text.secondary">
-                        {reminder.reminderTime && format(new Date(reminder.reminderTime), 'PPpp')}
-                        {reminder.sent && ' (Sent)'}
+      {reminders.length === 0 ? (
+        <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 2 }}>
+          No reminders set for this task.
+        </Typography>
+      ) : (
+        <List>
+          {reminders.map((reminder) => (
+            <React.Fragment key={reminder.id}>
+              <ListItem
+                secondaryAction={
+                  <IconButton
+                    edge="end"
+                    aria-label="delete"
+                    onClick={() => reminder.id && handleDeleteReminder(reminder.id)}
+                    disabled={loading}
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                }
+              >
+                <ListItemText
+                  primary={
+                    <Box display="flex" alignItems="center">
+                      {reminder.reminderType === ReminderType.EMAIL ? 
+                        <EmailIcon color="primary" sx={{ mr: 1 }} /> : 
+                        <NotificationsIcon color="secondary" sx={{ mr: 1 }} />
+                      }
+                      <Typography variant="body1">
+                        {reminder.reminderType} Reminder
                       </Typography>
-                    }
-                  />
-                </ListItem>
-              </React.Fragment>
-            ))}
-          </List>
-        ) : (
-          <Typography variant="body2" color="text.secondary" align="center" py={2}>
-            No reminders set for this task
-          </Typography>
-        )}
-      </Paper>
+                    </Box>
+                  }
+                  secondary={
+                    <Typography variant="body2" color="text.secondary">
+                      {reminder.reminderTime && format(new Date(reminder.reminderTime), 'PPpp')}
+                      {reminder.reminderSent && ' (Sent)'}
+                    </Typography>
+                  }
+                />
+              </ListItem>
+              <Divider component="li" />
+            </React.Fragment>
+          ))}
+        </List>
+      )}
 
       <Dialog open={open} onClose={handleClose}>
-        <DialogTitle>Set Reminder for {task.title}</DialogTitle>
+        <DialogTitle>Add Reminder</DialogTitle>
         <DialogContent>
-          <Box sx={{ mt: 2 }}>
-            <FormControl fullWidth sx={{ mb: 2 }}>
-              <InputLabel>Reminder Type</InputLabel>
-              <Select
-                value={reminderType}
-                onChange={(e) => setReminderType(e.target.value as 'EMAIL' | 'NOTIFICATION')}
-                label="Reminder Type"
-              >
-                <MenuItem value="EMAIL">Email</MenuItem>
-                <MenuItem value="NOTIFICATION">Notification</MenuItem>
-              </Select>
-            </FormControl>
-
+          <Stack spacing={3} sx={{ mt: 1, minWidth: '300px' }}>
+            {error && <Alert severity="error">{error}</Alert>}
+            {success && <Alert severity="success">{success}</Alert>}
+            
             <LocalizationProvider dateAdapter={AdapterDateFns}>
               <DateTimePicker
                 label="Reminder Time"
                 value={reminderTime}
                 onChange={(newValue) => setReminderTime(newValue)}
+                disablePast
                 slotProps={{ textField: { fullWidth: true } }}
               />
             </LocalizationProvider>
-          </Box>
+            
+            <FormControl fullWidth>
+              <InputLabel>Reminder Type</InputLabel>
+              <Select
+                value={reminderType}
+                label="Reminder Type"
+                onChange={(e) => setReminderType(e.target.value as ReminderType)}
+              >
+                <MenuItem value={ReminderType.EMAIL}>Email</MenuItem>
+                <MenuItem value={ReminderType.NOTIFICATION}>Notification</MenuItem>
+              </Select>
+            </FormControl>
+          </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleClose}>Cancel</Button>
+          <Button onClick={handleClose} disabled={loading}>Cancel</Button>
           <Button 
-            onClick={handleSubmit} 
+            onClick={handleAddReminder} 
             variant="contained" 
-            color="primary"
-            disabled={loading || !reminderTime}
+            disabled={loading}
+            startIcon={loading ? <CircularProgress size={20} /> : null}
           >
-            Set Reminder
+            {loading ? 'Adding...' : 'Add Reminder'}
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </Paper>
   );
 };
 

@@ -55,7 +55,7 @@ const TaskDetail: React.FC = () => {
     setLoadingReminders(true);
     try {
       const response = await reminderApi.getUserReminders();
-      const taskReminders = response.data.filter(reminder => reminder.taskId === taskId);
+      const taskReminders = response.data.filter((reminder: TaskReminderDto) => reminder.taskId === taskId);
       setReminders(taskReminders);
     } catch (error) {
       console.error('Error loading reminders:', error);
@@ -133,7 +133,7 @@ const TaskDetail: React.FC = () => {
     }
   };
   
-  const isOverdue = (dueDate: string, completed: boolean) => {
+  const isOverdue = (dueDate: string, completed: boolean | undefined) => {
     return !completed && new Date(dueDate) < new Date();
   };
   

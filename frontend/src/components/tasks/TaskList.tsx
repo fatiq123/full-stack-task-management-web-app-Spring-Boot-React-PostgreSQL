@@ -5,19 +5,15 @@ import {
   Paper,
   Typography,
   Button,
-  Tabs,
-  Tab,
   List,
   ListItem,
   ListItemText,
   ListItemIcon,
-  ListItemSecondaryAction,
   IconButton,
   Chip,
   Divider,
   CircularProgress,
   Alert,
-  Tooltip,
   Menu,
   MenuItem,
   ListItemButton,
@@ -30,17 +26,13 @@ import {
   Edit as EditIcon,
   MoreVert as MoreVertIcon,
   Category as CategoryIcon,
-  FilterList as FilterListIcon,
 } from '@mui/icons-material';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { 
   fetchAllTasks, 
-  fetchCompletedTasks, 
-  fetchPendingTasks, 
-  fetchOverdueTasks,
   toggleTaskCompletion,
-  deleteTask
+  deleteTask,
 } from '../../store/taskSlice';
 import { RootState } from '../../store';
 import { AppDispatch } from '../../store';
@@ -48,34 +40,11 @@ import { TaskDto, Priority } from '../../types';
 import TaskDialog from './TaskDialog';
 import ConfirmDialog from '../common/ConfirmDialog';
 
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
-}
-
-const TabPanel = (props: TabPanelProps) => {
-  const { children, value, index, ...other } = props;
-
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`task-tabpanel-${index}`}
-      aria-labelledby={`task-tab-${index}`}
-      {...other}
-    >
-      {value === index && <Box sx={{ pt: 2 }}>{children}</Box>}
-    </div>
-  );
-};
-
 const TaskList: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const { tasks, loading, error } = useSelector((state: RootState) => state.tasks);
   
-  const [tabValue, setTabValue] = useState(0);
   const [openTaskDialog, setOpenTaskDialog] = useState(false);
   const [currentTask, setCurrentTask] = useState<TaskDto | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -84,31 +53,8 @@ const TaskList: React.FC = () => {
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
   
   useEffect(() => {
-    loadTasks();
-  }, [tabValue, dispatch]);
-  
-  const loadTasks = () => {
-    switch (tabValue) {
-      case 0:
-        dispatch(fetchAllTasks());
-        break;
-      case 1:
-        dispatch(fetchPendingTasks());
-        break;
-      case 2:
-        dispatch(fetchCompletedTasks());
-        break;
-      case 3:
-        dispatch(fetchOverdueTasks());
-        break;
-      default:
-        dispatch(fetchAllTasks());
-    }
-  };
-  
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setTabValue(newValue);
-  };
+    dispatch(fetchAllTasks());
+  }, [dispatch]);
   
   const handleOpenMenu = (event: React.MouseEvent<HTMLElement>, taskId: number) => {
     setAnchorEl(event.currentTarget);
@@ -139,14 +85,14 @@ const TaskList: React.FC = () => {
   const handleTaskSaved = () => {
     setOpenTaskDialog(false);
     setCurrentTask(null);
-    loadTasks();
+    dispatch(fetchAllTasks());
   };
   
   const handleToggleCompletion = (taskId: number) => {
     dispatch(toggleTaskCompletion(taskId))
       .unwrap()
       .then(() => {
-        loadTasks();
+        dispatch(fetchAllTasks());
       })
       .catch((error) => {
         console.error('Failed to toggle task completion:', error);
@@ -164,7 +110,7 @@ const TaskList: React.FC = () => {
       dispatch(deleteTask(taskToDelete))
         .unwrap()
         .then(() => {
-          loadTasks();
+          dispatch(fetchAllTasks());
         });
     }
     setDeleteConfirmOpen(false);
@@ -174,6 +120,10 @@ const TaskList: React.FC = () => {
   const handleCancelDelete = () => {
     setDeleteConfirmOpen(false);
     setTaskToDelete(null);
+  };
+  
+  const handleViewTask = (taskId: number) => {
+    navigate(`/tasks/${taskId}`);
   };
   
   const getPriorityColor = (priority: Priority) => {
@@ -189,8 +139,8 @@ const TaskList: React.FC = () => {
     }
   };
   
-  const isOverdue = (dueDate: string, completed: boolean) => {
-    return !completed && new Date(dueDate) < new Date();
+  const isOverdue = (dueDate: string, completed: boolean | undefined) => {
+    return completed === false && new Date(dueDate) < new Date();
   };
   
   return (
@@ -207,22 +157,8 @@ const TaskList: React.FC = () => {
       </Box>
       
       <Paper sx={{ width: '100%' }}>
-        <Tabs
-          value={tabValue}
-          onChange={handleTabChange}
-          indicatorColor="primary"
-          textColor="primary"
-          variant="scrollable"
-          scrollButtons="auto"
-        >
-          <Tab label="All Tasks" />
-          <Tab label="Pending" />
-          <Tab label="Completed" />
-          <Tab label="Overdue" />
-        </Tabs>
-        
         {error && (
-          <Alert severity="error" sx={{ mt: 2 }}>
+          <Alert severity="error" sx={{ m: 2 }}>
             {error}
           </Alert>
         )}
@@ -231,45 +167,110 @@ const TaskList: React.FC = () => {
           <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
             <CircularProgress />
           </Box>
+        ) : tasks.length === 0 ? (
+          <Box sx={{ p: 3, textAlign: 'center' }}>
+            <Typography variant="body1" color="text.secondary">
+              No tasks found. Create a new task to get started.
+            </Typography>
+          </Box>
         ) : (
-          <>
-            <TabPanel value={tabValue} index={0}>
-              <TaskListContent 
-                tasks={tasks} 
-                handleToggleCompletion={handleToggleCompletion}
-                handleOpenMenu={handleOpenMenu}
-                getPriorityColor={getPriorityColor}
-                isOverdue={isOverdue}
-              />
-            </TabPanel>
-            <TabPanel value={tabValue} index={1}>
-              <TaskListContent 
-                tasks={tasks} 
-                handleToggleCompletion={handleToggleCompletion}
-                handleOpenMenu={handleOpenMenu}
-                getPriorityColor={getPriorityColor}
-                isOverdue={isOverdue}
-              />
-            </TabPanel>
-            <TabPanel value={tabValue} index={2}>
-              <TaskListContent 
-                tasks={tasks} 
-                handleToggleCompletion={handleToggleCompletion}
-                handleOpenMenu={handleOpenMenu}
-                getPriorityColor={getPriorityColor}
-                isOverdue={isOverdue}
-              />
-            </TabPanel>
-            <TabPanel value={tabValue} index={3}>
-              <TaskListContent 
-                tasks={tasks} 
-                handleToggleCompletion={handleToggleCompletion}
-                handleOpenMenu={handleOpenMenu}
-                getPriorityColor={getPriorityColor}
-                isOverdue={isOverdue}
-              />
-            </TabPanel>
-          </>
+          <List>
+            {tasks.map((task) => (
+              <React.Fragment key={task.id}>
+                <ListItem
+                  disablePadding
+                  sx={{
+                    bgcolor: isOverdue(task.dueDate, task.completed) ? 'error.50' : 'inherit',
+                  }}
+                >
+                  <ListItemButton onClick={() => task.id && handleViewTask(task.id)}>
+                    <ListItemIcon>
+                      <IconButton
+                        edge="start"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (task.id !== undefined) handleToggleCompletion(task.id);
+                        }}
+                      >
+                        {task.completed ? (
+                          <CheckCircleIcon color="success" />
+                        ) : (
+                          <RadioButtonUncheckedIcon />
+                        )}
+                      </IconButton>
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={
+                        <Typography
+                          variant="body1"
+                          sx={{
+                            textDecoration: task.completed ? 'line-through' : 'none',
+                            color: task.completed ? 'text.secondary' : 'text.primary',
+                          }}
+                        >
+                          {task.title}
+                        </Typography>
+                      }
+                      secondary={
+                        <Box>
+                          <Typography variant="body2" color="text.secondary">
+                            Due: {format(new Date(task.dueDate), 'MMM dd, yyyy HH:mm')}
+                            {isOverdue(task.dueDate, task.completed) && (
+                              <Chip
+                                label="Overdue"
+                                color="error"
+                                size="small"
+                                sx={{ ml: 1 }}
+                              />
+                            )}
+                          </Typography>
+                          {task.description && (
+                            <Typography
+                              variant="body2"
+                              color="text.secondary"
+                              sx={{
+                                display: '-webkit-box',
+                                overflow: 'hidden',
+                                WebkitBoxOrient: 'vertical',
+                                WebkitLineClamp: 2,
+                              }}
+                            >
+                              {task.description}
+                            </Typography>
+                          )}
+                        </Box>
+                      }
+                    />
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Chip
+                        label={task.priority}
+                        color={getPriorityColor(task.priority)}
+                        size="small"
+                      />
+                      {task.categoryName && (
+                        <Chip
+                          icon={<CategoryIcon />}
+                          label={task.categoryName}
+                          size="small"
+                          variant="outlined"
+                        />
+                      )}
+                      <IconButton
+                        edge="end"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (task.id) handleOpenMenu(e, task.id);
+                        }}
+                      >
+                        <MoreVertIcon />
+                      </IconButton>
+                    </Box>
+                  </ListItemButton>
+                </ListItem>
+                <Divider variant="inset" component="li" />
+              </React.Fragment>
+            ))}
+          </List>
         )}
       </Paper>
       
@@ -312,132 +313,6 @@ const TaskList: React.FC = () => {
         onCancel={handleCancelDelete}
       />
     </Box>
-  );
-};
-
-interface TaskListContentProps {
-  tasks: TaskDto[];
-  handleToggleCompletion: (taskId: number) => void;
-  handleOpenMenu: (event: React.MouseEvent<HTMLElement>, taskId: number) => void;
-  getPriorityColor: (priority: Priority) => "error" | "warning" | "success" | "default";
-  isOverdue: (dueDate: string, completed: boolean) => boolean;
-}
-
-const TaskListContent: React.FC<TaskListContentProps> = ({
-  tasks,
-  handleToggleCompletion,
-  handleOpenMenu,
-  getPriorityColor,
-  isOverdue
-}) => {
-  if (tasks.length === 0) {
-    return (
-      <Box sx={{ p: 3, textAlign: 'center' }}>
-        <Typography variant="body1" color="text.secondary">
-          No tasks found. Create a new task to get started.
-        </Typography>
-      </Box>
-    );
-  }
-  
-  return (
-    <List>
-      {tasks.map((task) => (
-        <React.Fragment key={task.id}>
-          <ListItem
-            disablePadding
-            sx={{
-              bgcolor: isOverdue(task.dueDate, task.completed) ? 'error.50' : 'inherit',
-            }}
-          >
-            <ListItemButton>
-              <ListItemIcon>
-                <IconButton
-                  edge="start"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (task.id !== undefined) handleToggleCompletion(task.id);
-                  }}
-                >
-                  {task.completed ? (
-                    <CheckCircleIcon color="success" />
-                  ) : (
-                    <RadioButtonUncheckedIcon />
-                  )}
-                </IconButton>
-              </ListItemIcon>
-              <ListItemText
-                primary={
-                  <Typography
-                    variant="body1"
-                    sx={{
-                      textDecoration: task.completed ? 'line-through' : 'none',
-                      color: task.completed ? 'text.secondary' : 'text.primary',
-                    }}
-                  >
-                    {task.title}
-                  </Typography>
-                }
-                secondary={
-                  <Box>
-                    <Typography variant="body2" color="text.secondary">
-                      Due: {format(new Date(task.dueDate), 'MMM dd, yyyy HH:mm')}
-                      {isOverdue(task.dueDate, task.completed) && (
-                        <Chip
-                          label="Overdue"
-                          color="error"
-                          size="small"
-                          sx={{ ml: 1 }}
-                        />
-                      )}
-                    </Typography>
-                    {task.description && (
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        sx={{
-                          display: '-webkit-box',
-                          overflow: 'hidden',
-                          WebkitBoxOrient: 'vertical',
-                          WebkitLineClamp: 2,
-                        }}
-                      >
-                        {task.description}
-                      </Typography>
-                    )}
-                  </Box>
-                }
-              />
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Chip
-                  label={task.priority}
-                  color={getPriorityColor(task.priority)}
-                  size="small"
-                />
-                {task.categoryName && (
-                  <Chip
-                    icon={<CategoryIcon />}
-                    label={task.categoryName}
-                    size="small"
-                    variant="outlined"
-                  />
-                )}
-                <IconButton
-                  edge="end"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (task.id) handleOpenMenu(e, task.id);
-                  }}
-                >
-                  <MoreVertIcon />
-                </IconButton>
-              </Box>
-            </ListItemButton>
-          </ListItem>
-          <Divider variant="inset" component="li" />
-        </React.Fragment>
-      ))}
-    </List>
   );
 };
 

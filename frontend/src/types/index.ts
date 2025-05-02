@@ -91,11 +91,17 @@ export interface DashboardDto {
 }
 
 // Reminder Types
+export enum ReminderType {
+  EMAIL = 'EMAIL',
+  NOTIFICATION = 'NOTIFICATION'
+}
+
 export interface TaskReminderDto {
   id?: number;
   taskId: number;
   taskTitle?: string;
   reminderTime: string;
+  reminderType: ReminderType;
   reminderSent: boolean;
   createdAt?: string;
 }

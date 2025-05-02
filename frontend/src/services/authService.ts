@@ -1,14 +1,16 @@
-import api from './api';
+import { authApi } from './api';
 import { LoginRequest, SignupRequest, JwtResponse } from '../types';
 
 class AuthService {
-  async login(loginRequest: LoginRequest): Promise<JwtResponse> {
-    const response = await api.post('/auth/signin', loginRequest);
-    if (response.data.token) {
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data));
-    }
-    return response.data;
+  login(loginRequest: LoginRequest): Promise<JwtResponse> {
+    return authApi.login(loginRequest)
+      .then(response => {
+        if (response.data.token) {
+          localStorage.setItem('token', response.data.token);
+          localStorage.setItem('user', JSON.stringify(response.data));
+        }
+        return response.data;
+      });
   }
 
   logout(): void {
@@ -17,21 +19,19 @@ class AuthService {
   }
 
   register(signupRequest: SignupRequest): Promise<any> {
-    return api.post('/auth/signup', signupRequest);
+    return authApi.register(signupRequest);
   }
 
-  getCurrentUser(): any {
+  getCurrentUser(): JwtResponse | null {
     const userStr = localStorage.getItem('user');
-    if (userStr) return JSON.parse(userStr);
+    if (userStr) {
+      return JSON.parse(userStr);
+    }
     return null;
   }
 
-  isLoggedIn(): boolean {
+  isAuthenticated(): boolean {
     return !!localStorage.getItem('token');
-  }
-
-  getToken(): string | null {
-    return localStorage.getItem('token');
   }
 }
 
