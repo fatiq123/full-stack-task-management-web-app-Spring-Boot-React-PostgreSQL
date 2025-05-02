@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState} from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import {
@@ -37,7 +37,8 @@ const RegisterSchema = Yup.object().shape({
 const Register: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
-  const { loading, error, message, isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const { loading, error, isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const [registrationSuccess, setRegistrationSuccess] = useState<string | null>(null);
   
   React.useEffect(() => {
     if (isAuthenticated) {
@@ -48,7 +49,8 @@ const Register: React.FC = () => {
   const handleSubmit = async (values: { username: string; email: string; password: string; name: string }) => {
     try {
       await dispatch(register(values)).unwrap();
-      // Registration successful, redirect to login
+      // Registration successful
+      setRegistrationSuccess('Registration successful! Redirecting to login...');
       setTimeout(() => {
         navigate('/login');
       }, 2000);
@@ -90,9 +92,9 @@ const Register: React.FC = () => {
             </Alert>
           )}
           
-          {message && (
+          {registrationSuccess && (
             <Alert severity="success" sx={{ mt: 2, width: '100%' }}>
-              {message}
+              {registrationSuccess}
             </Alert>
           )}
           

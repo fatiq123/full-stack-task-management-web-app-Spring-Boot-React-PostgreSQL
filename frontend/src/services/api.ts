@@ -2,29 +2,26 @@ import axios from 'axios';
 import { 
   LoginRequest, 
   SignupRequest, 
-  JwtResponse, 
+  TaskDto, 
+  CategoryDto, 
   UserDto, 
   PasswordChangeRequest,
-  TaskDto,
   TaskFilterDto,
-  TaskReminderDto,
-  CategoryDto,
-  DashboardDto
+  TaskReminderDto
 } from '../types';
 
 const API_URL = 'http://localhost:8080/api';
 
-// Create axios instance
-const api = axios.create({
+// Create axios instance with auth header
+const axiosInstance = axios.create({
   baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true // Important for CORS with credentials
 });
 
-// Add a request interceptor to include JWT token in headers
-api.interceptors.request.use(
+// Add auth token to requests
+axiosInstance.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
     if (token) {
@@ -37,14 +34,13 @@ api.interceptors.request.use(
   }
 );
 
-// Add error handling interceptor
-api.interceptors.response.use(
+// Handle 401 responses
+axiosInstance.interceptors.response.use(
   (response) => {
     return response;
   },
   (error) => {
     if (error.response && error.response.status === 401) {
-      // Clear token and redirect to login
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       window.location.href = '/login';
@@ -53,102 +49,107 @@ api.interceptors.response.use(
   }
 );
 
-// Authentication API
+// Auth API
 export const authApi = {
-  login: (loginRequest: LoginRequest) => 
-    api.post<JwtResponse>('/auth/signin', loginRequest),
-  
-  register: (signupRequest: SignupRequest) => 
-    api.post<{ message: string }>('/auth/signup', signupRequest),
+  login: (loginRequest: LoginRequest) => {
+    return axiosInstance.post('/auth/signin', loginRequest);
+  },
+  register: (signupRequest: SignupRequest) => {
+    return axiosInstance.post('/auth/signup', signupRequest);
+  },
 };
 
 // User API
 export const userApi = {
-  getProfile: () => 
-    api.get<UserDto>('/users/profile'),
-  
-  updateProfile: (userDto: UserDto) => 
-    api.put<UserDto>('/users/profile', userDto),
-  
-  changePassword: (passwordData: PasswordChangeRequest) => 
-    api.post<{ message: string }>('/users/change-password', passwordData),
+  getProfile: () => {
+    return axiosInstance.get('/users/profile');
+  },
+  updateProfile: (userDto: UserDto) => {
+    return axiosInstance.put('/users/profile', userDto);
+  },
+  changePassword: (passwordData: PasswordChangeRequest) => {
+    return axiosInstance.post('/users/change-password', passwordData);
+  },
 };
 
 // Task API
 export const taskApi = {
-  getAllTasks: () => 
-    api.get<TaskDto[]>('/tasks'),
-  
-  getTasksByPriority: () => 
-    api.get<TaskDto[]>('/tasks/priority'),
-  
-  getCompletedTasks: () => 
-    api.get<TaskDto[]>('/tasks/completed'),
-  
-  getPendingTasks: () => 
-    api.get<TaskDto[]>('/tasks/pending'),
-  
-  getOverdueTasks: () => 
-    api.get<TaskDto[]>('/tasks/overdue'),
-  
-  getTaskById: (id: number) => 
-    api.get<TaskDto>(`/tasks/${id}`),
-  
-  createTask: (task: TaskDto) => 
-    api.post<TaskDto>('/tasks', task),
-  
-  updateTask: (id: number, task: TaskDto) => 
-    api.put<TaskDto>(`/tasks/${id}`, task),
-  
-  deleteTask: (id: number) => 
-    api.delete(`/tasks/${id}`),
-  
-  toggleTaskCompletion: (id: number) => 
-    api.patch<TaskDto>(`/tasks/${id}/toggle-completion`),
-    
-  // New methods for filtering and sorting
-  filterTasks: (filter: TaskFilterDto, page: number = 0, size: number = 10) => 
-    api.post<{ content: TaskDto[], totalElements: number, totalPages: number }>
-      (`/tasks/filter?page=${page}&size=${size}`, filter),
-      
-  getUpcomingTasks: (days: number = 7) => 
-    api.get<TaskDto[]>(`/tasks/upcoming?days=${days}`),
-};
-
-// Task Reminder API
-export const reminderApi = {
-  getUserReminders: () => 
-    api.get<TaskReminderDto[]>('/reminders'),
-    
-  createReminder: (reminder: TaskReminderDto) => 
-    api.post<TaskReminderDto>('/reminders', reminder),
-    
-  deleteReminder: (id: number) => 
-    api.delete(`/reminders/${id}`),
+  getAllTasks: () => {
+    return axiosInstance.get('/tasks');
+  },
+  getTaskById: (id: number) => {
+    return axiosInstance.get(`/tasks/${id}`);
+  },
+  createTask: (task: TaskDto) => {
+    return axiosInstance.post('/tasks', task);
+  },
+  updateTask: (id: number, task: TaskDto) => {
+    return axiosInstance.put(`/tasks/${id}`, task);
+  },
+  deleteTask: (id: number) => {
+    return axiosInstance.delete(`/tasks/${id}`);
+  },
+  getCompletedTasks: () => {
+    return axiosInstance.get('/tasks/completed');
+  },
+  getPendingTasks: () => {
+    return axiosInstance.get('/tasks/pending');
+  },
+  getOverdueTasks: () => {
+    return axiosInstance.get('/tasks/overdue');
+  },
+  toggleTaskCompletion: (id: number) => {
+    return axiosInstance.patch(`/tasks/${id}/toggle-completion`);
+  },
+  filterTasks: (filter: TaskFilterDto, page: number = 0, size: number = 10) => {
+    return axiosInstance.post(`/tasks/filter?page=${page}&size=${size}`, filter);
+  },
+  getUpcomingTasks: (days: number = 7) => {
+    return axiosInstance.get(`/tasks/upcoming?days=${days}`);
+  },
 };
 
 // Category API
 export const categoryApi = {
-  getAllCategories: () => 
-    api.get<CategoryDto[]>('/categories'),
-  
-  getCategoryById: (id: number) => 
-    api.get<CategoryDto>(`/categories/${id}`),
-  
-  createCategory: (category: CategoryDto) => 
-    api.post<CategoryDto>('/categories', category),
-  
-  updateCategory: (id: number, category: CategoryDto) => 
-    api.put<CategoryDto>(`/categories/${id}`, category),
-  
-  deleteCategory: (id: number) => 
-    api.delete(`/categories/${id}`),
+  getAllCategories: () => {
+    return axiosInstance.get('/categories');
+  },
+  getCategoryById: (id: number) => {
+    return axiosInstance.get(`/categories/${id}`);
+  },
+  createCategory: (category: CategoryDto) => {
+    return axiosInstance.post('/categories', category);
+  },
+  updateCategory: (id: number, category: CategoryDto) => {
+    return axiosInstance.put(`/categories/${id}`, category);
+  },
+  deleteCategory: (id: number) => {
+    return axiosInstance.delete(`/categories/${id}`);
+  },
 };
 
 // Dashboard API
 export const dashboardApi = {
-  getDashboardData: () => 
-    api.get<DashboardDto>('/dashboard'),
+  getDashboardData: () => {
+    return axiosInstance.get('/dashboard');
+  },
 };
 
-export default api;
+// Reminder API
+export const reminderApi = {
+  getUserReminders: () => {
+    return axiosInstance.get('/reminders');
+  },
+  getRemindersByTaskId: (taskId: number) => {
+    return axiosInstance.get(`/reminders/task/${taskId}`);
+  },
+  createReminder: (reminder: TaskReminderDto) => {
+    return axiosInstance.post('/reminders', reminder);
+  },
+  updateReminder: (id: number, reminder: TaskReminderDto) => {
+    return axiosInstance.put(`/reminders/${id}`, reminder);
+  },
+  deleteReminder: (id: number) => {
+    return axiosInstance.delete(`/reminders/${id}`);
+  },
+};

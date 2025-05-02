@@ -35,16 +35,28 @@ const PasswordSchema = Yup.object().shape({
 
 const Profile: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { user, loading, error, message } = useSelector((state: RootState) => state.user);
+  const { loading, error, message } = useSelector((state: RootState) => state.user);
+  const [userData, setUserData] = useState<any>(null);
   const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   
   useEffect(() => {
-    dispatch(fetchUserProfile());
+    dispatch(fetchUserProfile())
+      .unwrap()
+      .then((userData) => {
+        setUserData(userData);
+      })
+      .catch((error) => {
+        console.error('Error fetching user profile:', error);
+      });
   }, [dispatch]);
   
   const handleProfileUpdate = async (values: any) => {
-    await dispatch(updateUserProfile(values));
+    await dispatch(updateUserProfile(values))
+      .unwrap()
+      .then((updatedUser) => {
+        setUserData(updatedUser);
+      });
   };
   
   const handlePasswordChange = async (values: any, { resetForm }: any) => {
@@ -62,7 +74,7 @@ const Profile: React.FC = () => {
     }
   };
   
-  if (loading && !user) {
+  if (loading && !userData) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
         <CircularProgress />
@@ -94,15 +106,15 @@ const Profile: React.FC = () => {
             <Avatar
               sx={{ width: 80, height: 80, mr: 2, bgcolor: 'primary.main' }}
             >
-              {user?.name?.charAt(0) || 'U'}
+              {userData?.name?.charAt(0) || 'U'}
             </Avatar>
             <Box>
-              <Typography variant="h5">{user?.name}</Typography>
+              <Typography variant="h5">{userData?.name}</Typography>
               <Typography variant="body1" color="text.secondary">
-                {user?.email}
+                {userData?.email}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Username: {user?.username}
+                Username: {userData?.username}
               </Typography>
             </Box>
           </Box>
@@ -113,11 +125,11 @@ const Profile: React.FC = () => {
             Update Profile
           </Typography>
           
-          {user && (
+          {userData && (
             <Formik
               initialValues={{
-                name: user.name || '',
-                email: user.email || '',
+                name: userData.name || '',
+                email: userData.email || '',
               }}
               validationSchema={ProfileSchema}
               onSubmit={handleProfileUpdate}
@@ -252,5 +264,7 @@ const Profile: React.FC = () => {
     </Box>
   );
 };
+
+export default Profile;
 
 export default Profile;

@@ -4,16 +4,16 @@ import { CategoryDto } from '../types';
 
 interface CategoryState {
   categories: CategoryDto[];
-  currentCategory: CategoryDto | null;
+  selectedCategory: CategoryDto | null;
   loading: boolean;
   error: string | null;
 }
 
 const initialState: CategoryState = {
   categories: [],
-  currentCategory: null,
+  selectedCategory: null,
   loading: false,
-  error: null,
+  error: null
 };
 
 export const fetchAllCategories = createAsyncThunk(
@@ -80,12 +80,12 @@ const categorySlice = createSlice({
   name: 'categories',
   initialState,
   reducers: {
-    clearCurrentCategory: (state) => {
-      state.currentCategory = null;
+    clearSelectedCategory: (state) => {
+      state.selectedCategory = null;
     },
-    clearError: (state) => {
+    clearCategoryError: (state) => {
       state.error = null;
-    },
+    }
   },
   extraReducers: (builder) => {
     builder
@@ -110,7 +110,7 @@ const categorySlice = createSlice({
       })
       .addCase(fetchCategoryById.fulfilled, (state, action: PayloadAction<CategoryDto>) => {
         state.loading = false;
-        state.currentCategory = action.payload;
+        state.selectedCategory = action.payload;
       })
       .addCase(fetchCategoryById.rejected, (state, action) => {
         state.loading = false;
@@ -142,7 +142,9 @@ const categorySlice = createSlice({
         if (index !== -1) {
           state.categories[index] = action.payload;
         }
-        state.currentCategory = action.payload;
+        if (state.selectedCategory && state.selectedCategory.id === action.payload.id) {
+          state.selectedCategory = action.payload;
+        }
       })
       .addCase(updateCategory.rejected, (state, action) => {
         state.loading = false;
@@ -157,16 +159,17 @@ const categorySlice = createSlice({
       .addCase(deleteCategory.fulfilled, (state, action: PayloadAction<number>) => {
         state.loading = false;
         state.categories = state.categories.filter(category => category.id !== action.payload);
-        if (state.currentCategory?.id === action.payload) {
-          state.currentCategory = null;
+        if (state.selectedCategory && state.selectedCategory.id === action.payload) {
+          state.selectedCategory = null;
         }
       })
       .addCase(deleteCategory.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });
-  },
+  }
 });
 
-export const { clearCurrentCategory, clearError } = categorySlice.actions;
+export const { clearSelectedCategory, clearCategoryError } = categorySlice.actions;
+
 export default categorySlice.reducer;

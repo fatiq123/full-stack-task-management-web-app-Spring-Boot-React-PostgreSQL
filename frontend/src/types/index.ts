@@ -1,4 +1,4 @@
-// Authentication Types
+// Auth Types
 export interface LoginRequest {
   username: string;
   password: string;
@@ -9,29 +9,23 @@ export interface SignupRequest {
   email: string;
   password: string;
   name: string;
-  roles?: string[];
 }
 
 export interface JwtResponse {
-  token: string;
   id: number;
   username: string;
   email: string;
   name: string;
   roles: string[];
-}
-
-export interface MessageResponse {
-  message: string;
+  token: string;
 }
 
 // User Types
 export interface UserDto {
-  id: number;
-  username: string;
-  email: string;
-  name: string;
-  profilePicture?: string;
+  id?: number;
+  username?: string;
+  email?: string;
+  name?: string;
 }
 
 export interface PasswordChangeRequest {
@@ -41,9 +35,9 @@ export interface PasswordChangeRequest {
 
 // Task Types
 export enum Priority {
-  LOW = "LOW",
-  MEDIUM = "MEDIUM",
-  HIGH = "HIGH"
+  HIGH = 'HIGH',
+  MEDIUM = 'MEDIUM',
+  LOW = 'LOW'
 }
 
 export interface TaskDto {
@@ -51,15 +45,14 @@ export interface TaskDto {
   title: string;
   description?: string;
   dueDate: string;
+  completed?: boolean;
   priority: Priority;
-  completed: boolean;
   categoryId?: number;
   categoryName?: string;
   createdAt?: string;
   updatedAt?: string;
 }
 
-// Task Filter Types
 export interface TaskFilterDto {
   searchTerm?: string;
   priority?: Priority;
@@ -69,16 +62,6 @@ export interface TaskFilterDto {
   endDate?: string;
   sortBy?: string;
   sortDirection?: 'asc' | 'desc';
-}
-
-// Task Reminder Types
-export interface TaskReminderDto {
-  taskId: number;
-  taskTitle?: string;
-  dueDate?: string;
-  reminderType: 'EMAIL' | 'NOTIFICATION';
-  reminderTime: string;
-  sent?: boolean;
 }
 
 // Category Types
@@ -95,15 +78,46 @@ export interface DashboardDto {
   completedTasks: number;
   pendingTasks: number;
   overdueTasks: number;
-  upcomingTasks: TaskDto[];
+  completionRate: number;
+  averageCompletionTimeInDays: number;
+  tasksByPriority: Record<string, number>;
+  tasksByCategory: Record<string, number>;
+  tasksByMonth: Record<string, number>;
+  taskCompletionTrend: Record<string, number>;
+  recentTasks: TaskDto[];
+  upcomingDeadlines: TaskDto[];
   categories: CategoryDto[];
-  // Enhanced dashboard data
-  tasksByCategory?: Record<string, number>;
-  tasksByPriority?: Record<string, number>;
-  tasksByMonth?: Record<string, number>;
-  recentTasks?: TaskDto[];
-  upcomingDeadlines?: TaskDto[];
-  completionRate?: number;
-  taskCompletionTrend?: Record<string, number>;
-  averageCompletionTimeInDays?: number;
+  upcomingTasks: TaskDto[];
+}
+
+// Reminder Types
+export interface TaskReminderDto {
+  id?: number;
+  taskId: number;
+  taskTitle?: string;
+  reminderTime: string;
+  reminderSent: boolean;
+  createdAt?: string;
+}
+
+// Pagination Types
+export interface PageResponse<T> {
+  content: T[];
+  pageable: {
+    pageNumber: number;
+    pageSize: number;
+  };
+  totalPages: number;
+  totalElements: number;
+  last: boolean;
+  first: boolean;
+  size: number;
+  number: number;
+  sort: {
+    sorted: boolean;
+    unsorted: boolean;
+    empty: boolean;
+  };
+  numberOfElements: number;
+  empty: boolean;
 }

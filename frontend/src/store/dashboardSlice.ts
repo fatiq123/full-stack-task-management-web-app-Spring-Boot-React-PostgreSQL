@@ -11,7 +11,7 @@ interface DashboardState {
 const initialState: DashboardState = {
   data: null,
   loading: false,
-  error: null,
+  error: null
 };
 
 export const fetchDashboardData = createAsyncThunk(
@@ -30,9 +30,9 @@ const dashboardSlice = createSlice({
   name: 'dashboard',
   initialState,
   reducers: {
-    clearError: (state) => {
+    clearDashboardError: (state) => {
       state.error = null;
-    },
+    }
   },
   extraReducers: (builder) => {
     builder
@@ -48,8 +48,9 @@ const dashboardSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       });
-  },
+  }
 });
 
-export const { clearError } = dashboardSlice.actions;
+export const { clearDashboardError } = dashboardSlice.actions;
+
 export default dashboardSlice.reducer;

@@ -8,7 +8,7 @@ import {
   Typography,
   Drawer,
   List,
-  ListItem,
+  ListItemButton,
   ListItemIcon,
   ListItemText,
   Divider,
@@ -76,39 +76,39 @@ const Layout: React.FC = () => {
       </Toolbar>
       <Divider />
       <List>
-        <ListItem button onClick={() => handleNavigation('/dashboard')}>
+        <ListItemButton onClick={() => handleNavigation('/dashboard')}>
           <ListItemIcon>
             <DashboardIcon />
           </ListItemIcon>
           <ListItemText primary="Dashboard" />
-        </ListItem>
-        <ListItem button onClick={() => handleNavigation('/tasks')}>
+        </ListItemButton>
+        <ListItemButton onClick={() => handleNavigation('/tasks')}>
           <ListItemIcon>
             <AssignmentIcon />
           </ListItemIcon>
           <ListItemText primary="Tasks" />
-        </ListItem>
-        <ListItem button onClick={() => handleNavigation('/categories')}>
+        </ListItemButton>
+        <ListItemButton onClick={() => handleNavigation('/categories')}>
           <ListItemIcon>
             <CategoryIcon />
           </ListItemIcon>
           <ListItemText primary="Categories" />
-        </ListItem>
+        </ListItemButton>
       </List>
       <Divider />
       <List>
-        <ListItem button onClick={() => handleNavigation('/profile')}>
+        <ListItemButton onClick={() => handleNavigation('/profile')}>
           <ListItemIcon>
             <PersonIcon />
           </ListItemIcon>
           <ListItemText primary="Profile" />
-        </ListItem>
-        <ListItem button onClick={handleLogout}>
+        </ListItemButton>
+        <ListItemButton onClick={handleLogout}>
           <ListItemIcon>
             <LogoutIcon />
           </ListItemIcon>
           <ListItemText primary="Logout" />
-        </ListItem>
+        </ListItemButton>
       </List>
     </div>
   );

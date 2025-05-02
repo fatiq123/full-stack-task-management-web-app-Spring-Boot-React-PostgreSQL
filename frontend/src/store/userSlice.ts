@@ -3,17 +3,17 @@ import { userApi } from '../services/api';
 import { UserDto, PasswordChangeRequest } from '../types';
 
 interface UserState {
-  profile: UserDto | null;
+  user: UserDto | null;
   loading: boolean;
   error: string | null;
   message: string | null;
 }
 
 const initialState: UserState = {
-  profile: null,
+  user: null,
   loading: false,
   error: null,
-  message: null,
+  message: null
 };
 
 export const fetchUserProfile = createAsyncThunk(
@@ -23,19 +23,19 @@ export const fetchUserProfile = createAsyncThunk(
       const response = await userApi.getProfile();
       return response.data;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to fetch user profile');
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch profile');
     }
   }
 );
 
 export const updateUserProfile = createAsyncThunk(
   'user/updateProfile',
-  async (userData: UserDto, { rejectWithValue }) => {
+  async (userDto: UserDto, { rejectWithValue }) => {
     try {
-      const response = await userApi.updateProfile(userData);
+      const response = await userApi.updateProfile(userDto);
       return response.data;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to update user profile');
+      return rejectWithValue(error.response?.data?.message || 'Failed to update profile');
     }
   }
 );
@@ -45,7 +45,7 @@ export const changePassword = createAsyncThunk(
   async (passwordData: PasswordChangeRequest, { rejectWithValue }) => {
     try {
       const response = await userApi.changePassword(passwordData);
-      return response.data.message;
+      return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Failed to change password');
     }
@@ -56,30 +56,30 @@ const userSlice = createSlice({
   name: 'user',
   initialState,
   reducers: {
-    clearError: (state) => {
+    clearUserError: (state) => {
       state.error = null;
     },
-    clearMessage: (state) => {
+    clearUserMessage: (state) => {
       state.message = null;
-    },
+    }
   },
   extraReducers: (builder) => {
     builder
-      // Fetch user profile
+      // Fetch profile
       .addCase(fetchUserProfile.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(fetchUserProfile.fulfilled, (state, action: PayloadAction<UserDto>) => {
         state.loading = false;
-        state.profile = action.payload;
+        state.user = action.payload;
       })
       .addCase(fetchUserProfile.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })
       
-      // Update user profile
+      // Update profile
       .addCase(updateUserProfile.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -87,7 +87,7 @@ const userSlice = createSlice({
       })
       .addCase(updateUserProfile.fulfilled, (state, action: PayloadAction<UserDto>) => {
         state.loading = false;
-        state.profile = action.payload;
+        state.user = action.payload;
         state.message = 'Profile updated successfully';
       })
       .addCase(updateUserProfile.rejected, (state, action) => {
@@ -101,16 +101,17 @@ const userSlice = createSlice({
         state.error = null;
         state.message = null;
       })
-      .addCase(changePassword.fulfilled, (state, action: PayloadAction<string>) => {
+      .addCase(changePassword.fulfilled, (state, action: PayloadAction<{ message: string }>) => {
         state.loading = false;
-        state.message = action.payload;
+        state.message = action.payload.message;
       })
       .addCase(changePassword.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });
-  },
+  }
 });
 
-export const { clearError, clearMessage } = userSlice.actions;
+export const { clearUserError, clearUserMessage } = userSlice.actions;
+
 export default userSlice.reducer;
