@@ -1,10 +1,12 @@
 package com.taskmanagement.app.controller;
 
 import com.taskmanagement.app.dto.TaskDto;
+import com.taskmanagement.app.dto.TaskFilterDto;
 import com.taskmanagement.app.security.UserDetailsImpl;
 import com.taskmanagement.app.service.TaskService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -82,5 +84,25 @@ public class TaskController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<TaskDto> toggleTaskCompletion(@PathVariable Long id, @AuthenticationPrincipal UserDetailsImpl userDetails) {
         return ResponseEntity.ok(taskService.toggleTaskCompletion(id, userDetails.getId()));
+    }
+    
+    // New endpoints for filtering and sorting
+    @PostMapping("/filter")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Page<TaskDto>> filterTasks(
+            @RequestBody TaskFilterDto filterDto,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        return ResponseEntity.ok(taskService.filterTasks(filterDto, page, size, userDetails.getId()));
+    }
+    
+    // Endpoint for upcoming tasks (for reminders)
+    @GetMapping("/upcoming")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<TaskDto>> getUpcomingTasks(
+            @RequestParam(defaultValue = "7") int days,
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        return ResponseEntity.ok(taskService.getUpcomingTasks(userDetails.getId(), days));
     }
 }

@@ -1,6 +1,7 @@
 package com.taskmanagement.app.service;
 
 import com.taskmanagement.app.dto.TaskDto;
+import com.taskmanagement.app.dto.TaskFilterDto;
 import com.taskmanagement.app.exception.ResourceNotFoundException;
 import com.taskmanagement.app.model.Category;
 import com.taskmanagement.app.model.Task;
@@ -9,6 +10,11 @@ import com.taskmanagement.app.repository.CategoryRepository;
 import com.taskmanagement.app.repository.TaskRepository;
 import com.taskmanagement.app.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -160,6 +166,67 @@ public class TaskService {
         Task updatedTask = taskRepository.save(task);
         
         return convertToDto(updatedTask);
+    }
+    
+    // New methods for filtering and sorting
+    @Transactional(readOnly = true)
+    public Page<TaskDto> filterTasks(TaskFilterDto filterDto, int page, int size, Long userId) {
+        User user = getUserById(userId);
+        
+        // Create sort object based on filter criteria
+        Sort sort = Sort.by(
+            filterDto.getSortDirection().equalsIgnoreCase("asc") ? 
+                Sort.Direction.ASC : Sort.Direction.DESC, 
+            filterDto.getSortBy()
+        );
+        
+        Pageable pageable = PageRequest.of(page, size, sort);
+        
+        // Build dynamic query based on filter criteria
+        Specification<Task> spec = Specification.where((root, query, cb) -> cb.equal(root.get("user"), user));
+        
+        if (filterDto.getSearchTerm() != null && !filterDto.getSearchTerm().isEmpty()) {
+            spec = spec.and((root, query, cb) -> 
+                cb.or(
+                    cb.like(cb.lower(root.get("title")), "%" + filterDto.getSearchTerm().toLowerCase() + "%"),
+                    cb.like(cb.lower(root.get("description")), "%" + filterDto.getSearchTerm().toLowerCase() + "%")
+                )
+            );
+        }
+        
+        if (filterDto.getPriority() != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("priority"), filterDto.getPriority()));
+        }
+        
+        if (filterDto.getCategoryId() != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("category").get("id"), filterDto.getCategoryId()));
+        }
+        
+        if (filterDto.getCompleted() != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("completed"), filterDto.getCompleted()));
+        }
+        
+        if (filterDto.getStartDate() != null) {
+            spec = spec.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get("dueDate"), filterDto.getStartDate()));
+        }
+        
+        if (filterDto.getEndDate() != null) {
+            spec = spec.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get("dueDate"), filterDto.getEndDate()));
+        }
+        
+        return taskRepository.findAll(spec, pageable).map(this::convertToDto);
+    }
+    
+    // Method for upcoming tasks (for reminders)
+    @Transactional(readOnly = true)
+    public List<TaskDto> getUpcomingTasks(Long userId, int days) {
+        User user = getUserById(userId);
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime endDate = now.plusDays(days);
+        
+        return taskRepository.findUpcomingTasks(user, now, endDate).stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
     }
 
     private User getUserById(Long userId) {

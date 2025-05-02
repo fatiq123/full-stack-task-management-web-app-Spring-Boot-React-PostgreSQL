@@ -14,7 +14,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -79,6 +80,126 @@ public class DashboardService {
                 })
                 .collect(Collectors.toList()));
         dashboardDto.setCategories(categories);
+        
+        // Enhanced dashboard data
+        
+        // Get all tasks for the user
+        List<Task> allTasks = taskRepository.findByUserOrderByDueDateAsc(user);
+        
+        // Tasks by category
+        Map<String, Long> tasksByCategory = new HashMap<>();
+        categories.forEach(category -> {
+            long count = allTasks.stream()
+                    .filter(task -> task.getCategory() != null && 
+                           task.getCategory().getId().equals(category.getId()))
+                    .count();
+            tasksByCategory.put(category.getName(), count);
+        });
+        dashboardDto.setTasksByCategory(tasksByCategory);
+        
+        // Tasks by priority
+        Map<String, Long> tasksByPriority = new HashMap<>();
+        for (Task.Priority priority : Task.Priority.values()) {
+            long count = allTasks.stream()
+                    .filter(task -> task.getPriority() == priority)
+                    .count();
+            tasksByPriority.put(priority.name(), count);
+        }
+        dashboardDto.setTasksByPriority(tasksByPriority);
+        
+        // Tasks by month (for the current year)
+        Map<String, Long> tasksByMonth = new HashMap<>();
+        int currentYear = LocalDateTime.now().getYear();
+        for (int month = 1; month <= 12; month++) {
+            final int m = month;
+            long count = allTasks.stream()
+                    .filter(task -> task.getCreatedAt().getYear() == currentYear && 
+                                   task.getCreatedAt().getMonthValue() == m)
+                    .count();
+            tasksByMonth.put(String.valueOf(month), count);
+        }
+        dashboardDto.setTasksByMonth(tasksByMonth);
+        
+        // Recent tasks (last 5)
+        List<TaskDto> recentTasks = allTasks.stream()
+                .sorted(Comparator.comparing(Task::getCreatedAt).reversed())
+                .limit(5)
+                .map(task -> {
+                    TaskDto taskDto = new TaskDto();
+                    taskDto.setId(task.getId());
+                    taskDto.setTitle(task.getTitle());
+                    taskDto.setDueDate(task.getDueDate());
+                    taskDto.setPriority(task.getPriority());
+                    taskDto.setCompleted(task.isCompleted());
+                    taskDto.setUserId(userId);
+                    if (task.getCategory() != null) {
+                        taskDto.setCategoryName(task.getCategory().getName());
+                    }
+                    return taskDto;
+                })
+                .collect(Collectors.toList());
+        dashboardDto.setRecentTasks(recentTasks);
+        
+        // Upcoming deadlines (next 5 due tasks)
+        List<TaskDto> upcomingDeadlines = allTasks.stream()
+                .filter(task -> !task.isCompleted() && task.getDueDate().isAfter(now))
+                .sorted(Comparator.comparing(Task::getDueDate))
+                .limit(5)
+                .map(task -> {
+                    TaskDto taskDto = new TaskDto();
+                    taskDto.setId(task.getId());
+                    taskDto.setTitle(task.getTitle());
+                    taskDto.setDueDate(task.getDueDate());
+                    taskDto.setPriority(task.getPriority());
+                    taskDto.setUserId(userId);
+                    if (task.getCategory() != null) {
+                        taskDto.setCategoryName(task.getCategory().getName());
+                    }
+                    return taskDto;
+                })
+                .collect(Collectors.toList());
+        dashboardDto.setUpcomingDeadlines(upcomingDeadlines);
+        
+        // Completion rate
+        if (totalTasks > 0) {
+            double completionRate = (double) completedTasks / totalTasks * 100;
+            dashboardDto.setCompletionRate(Math.round(completionRate * 100.0) / 100.0); // Round to 2 decimal places
+        } else {
+            dashboardDto.setCompletionRate(0.0);
+        }
+        
+        // Task completion trend (last 6 months)
+        Map<String, Long> taskCompletionTrend = new HashMap<>();
+        LocalDateTime sixMonthsAgo = now.minusMonths(6);
+        for (int i = 0; i < 6; i++) {
+            LocalDateTime monthStart = sixMonthsAgo.plusMonths(i);
+            LocalDateTime monthEnd = monthStart.plusMonths(1);
+            final LocalDateTime ms = monthStart;
+            final LocalDateTime me = monthEnd;
+            
+            long completedInMonth = allTasks.stream()
+                    .filter(task -> task.isCompleted() && 
+                                   task.getUpdatedAt().isAfter(ms) && 
+                                   task.getUpdatedAt().isBefore(me))
+                    .count();
+            
+            taskCompletionTrend.put(monthStart.getMonth().toString(), completedInMonth);
+        }
+        dashboardDto.setTaskCompletionTrend(taskCompletionTrend);
+        
+        // Average completion time in days
+        List<Task> completedTasksList = allTasks.stream()
+                .filter(Task::isCompleted)
+                .collect(Collectors.toList());
+        
+        if (!completedTasksList.isEmpty()) {
+            long totalDays = completedTasksList.stream()
+                    .mapToLong(task -> ChronoUnit.DAYS.between(task.getCreatedAt(), task.getUpdatedAt()))
+                    .sum();
+            dashboardDto.setAverageCompletionTimeInDays(totalDays / completedTasksList.size());
+        } else {
+            dashboardDto.setAverageCompletionTimeInDays(0L);
+        }
         
         return dashboardDto;
     }
