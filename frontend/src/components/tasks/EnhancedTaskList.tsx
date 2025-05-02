@@ -11,13 +11,11 @@ import {
   ListItem,
   ListItemText,
   ListItemIcon,
-  ListItemSecondaryAction,
   IconButton,
   Chip,
   Divider,
   CircularProgress,
   Alert,
-  Tooltip,
   Menu,
   MenuItem,
   ListItemButton,
@@ -31,7 +29,6 @@ import {
   Edit as EditIcon,
   MoreVert as MoreVertIcon,
   Category as CategoryIcon,
-  FilterList as FilterListIcon,
 } from '@mui/icons-material';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
@@ -47,7 +44,7 @@ import {
 import { fetchAllCategories } from '../../store/categorySlice';
 import { RootState } from '../../store';
 import { AppDispatch } from '../../store';
-import { TaskDto, Priority, TaskFilterDto, CategoryDto } from '../../types';
+import { TaskDto, Priority, TaskFilterDto } from '../../types';
 import TaskDialog from './TaskDialog';
 import ConfirmDialog from '../common/ConfirmDialog';
 import TaskFilter from '../TaskFilter';
@@ -359,7 +356,7 @@ const EnhancedTaskList: React.FC = () => {
       >
         <MenuItem 
           onClick={() => {
-            const task = displayedTasks.find((t: { id: number | null; }) => t.id === selectedTaskId);
+            const task = displayedTasks.find(t => t.id === selectedTaskId);
             if (task) handleEditTask(task);
           }}
         >

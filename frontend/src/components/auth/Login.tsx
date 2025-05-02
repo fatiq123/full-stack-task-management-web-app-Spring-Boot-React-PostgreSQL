@@ -1,131 +1,140 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate, Link as RouterLink } from 'react-router-dom';
-import { useFormik } from 'formik';
-import * as Yup from 'yup';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import {
   Container,
   Box,
   Typography,
   TextField,
   Button,
-  Paper,
   Link,
+  Paper,
   Avatar,
   CircularProgress,
   Alert,
-  Stack
 } from '@mui/material';
 import { LockOutlined as LockOutlinedIcon } from '@mui/icons-material';
-import { login, clearError } from '../../store/authSlice';
+import { Formik, Form, Field, FieldProps } from 'formik';
+import * as Yup from 'yup';
+import { login } from '../../store/authSlice';
 import { RootState } from '../../store';
 import { AppDispatch } from '../../store';
+
+const LoginSchema = Yup.object().shape({
+  username: Yup.string().required('Username is required'),
+  password: Yup.string().required('Password is required'),
+});
 
 const Login: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
+  const { loading, error, isAuthenticated } = useSelector((state: RootState) => state.auth);
   
-  const { isAuthenticated, loading, error } = useSelector(
-    (state: RootState) => state.auth
-  );
-  
-  useEffect(() => {
+  React.useEffect(() => {
     if (isAuthenticated) {
       navigate('/dashboard');
     }
-    
-    return () => {
-      if (error) {
-        dispatch(clearError());
-      }
-    };
-  }, [isAuthenticated, navigate, dispatch, error]);
+  }, [isAuthenticated, navigate]);
   
-  const formik = useFormik({
-    initialValues: {
-      username: '',
-      password: '',
-    },
-    validationSchema: Yup.object({
-      username: Yup.string().required('Username is required'),
-      password: Yup.string().required('Password is required'),
-    }),
-    onSubmit: (values) => {
-      dispatch(login(values));
-    },
-  });
+  const handleSubmit = async (values: { username: string; password: string }) => {
+    try {
+      await dispatch(login(values)).unwrap();
+      navigate('/dashboard');
+    } catch (error) {
+      console.error('Login failed:', error);
+    }
+  };
   
   return (
     <Container component="main" maxWidth="xs">
-      <Paper
-        elevation={6}
+      <Box
         sx={{
-          mt: 8,
-          p: 4,
+          marginTop: 8,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          borderRadius: 2,
         }}
       >
-        <Avatar sx={{ m: 1, bgcolor: 'primary.main' }}>
-          <LockOutlinedIcon />
-        </Avatar>
-        <Typography component="h1" variant="h5" sx={{ mb: 3 }}>
-          Sign in
-        </Typography>
-        
-        {error && (
-          <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
-            {error}
-          </Alert>
-        )}
-        
-        <Box component="form" onSubmit={formik.handleSubmit} sx={{ mt: 1, width: '100%' }}>
-          <TextField
-            margin="normal"
-            required
-            fullWidth
-            id="username"
-            label="Username"
-            name="username"
-            autoComplete="username"
-            autoFocus
-            value={formik.values.username}
-            onChange={formik.handleChange}
-            error={formik.touched.username && Boolean(formik.errors.username)}
-            helperText={formik.touched.username && formik.errors.username}
-          />
-          <TextField
-            margin="normal"
-            required
-            fullWidth
-            name="password"
-            label="Password"
-            type="password"
-            id="password"
-            autoComplete="current-password"
-            value={formik.values.password}
-            onChange={formik.handleChange}
-            error={formik.touched.password && Boolean(formik.errors.password)}
-            helperText={formik.touched.password && formik.errors.password}
-          />
-          <Button
-            type="submit"
-            fullWidth
-            variant="contained"
-            sx={{ mt: 3, mb: 2, py: 1.2 }}
-            disabled={loading}
+        <Paper
+          elevation={3}
+          sx={{
+            padding: 4,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            width: '100%',
+          }}
+        >
+          <Avatar sx={{ m: 1, bgcolor: 'primary.main' }}>
+            <LockOutlinedIcon />
+          </Avatar>
+          <Typography component="h1" variant="h5">
+            Sign in
+          </Typography>
+          
+          {error && (
+            <Alert severity="error" sx={{ mt: 2, width: '100%' }}>
+              {error}
+            </Alert>
+          )}
+          
+          <Formik
+            initialValues={{ username: '', password: '' }}
+            validationSchema={LoginSchema}
+            onSubmit={handleSubmit}
           >
-            {loading ? <CircularProgress size={24} /> : 'Sign In'}
-          </Button>
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <Link component={RouterLink} to="/register" variant="body2">
-              {"Don't have an account? Sign Up"}
-            </Link>
-          </Box>
-        </Box>
-      </Paper>
+            {({ isSubmitting }) => (
+              <Form style={{ width: '100%', marginTop: '1rem' }}>
+                <Field name="username">
+                  {({ field, meta }: FieldProps) => (
+                    <TextField
+                      {...field}
+                      margin="normal"
+                      fullWidth
+                      label="Username"
+                      autoComplete="username"
+                      autoFocus
+                      error={meta.touched && Boolean(meta.error)}
+                      helperText={meta.touched && meta.error}
+                    />
+                  )}
+                </Field>
+                
+                <Field name="password">
+                  {({ field, meta }: FieldProps) => (
+                    <TextField
+                      {...field}
+                      margin="normal"
+                      fullWidth
+                      label="Password"
+                      type="password"
+                      autoComplete="current-password"
+                      error={meta.touched && Boolean(meta.error)}
+                      helperText={meta.touched && meta.error}
+                    />
+                  )}
+                </Field>
+                
+                <Button
+                  type="submit"
+                  fullWidth
+                  variant="contained"
+                  sx={{ mt: 3, mb: 2 }}
+                  disabled={isSubmitting || loading}
+                >
+                  {loading ? <CircularProgress size={24} /> : 'Sign In'}
+                </Button>
+                
+                <Box sx={{ textAlign: 'center' }}>
+                  <Link component={RouterLink} to="/register" variant="body2">
+                    {"Don't have an account? Sign Up"}
+                  </Link>
+                </Box>
+              </Form>
+            )}
+          </Formik>
+        </Paper>
+      </Box>
     </Container>
   );
 };

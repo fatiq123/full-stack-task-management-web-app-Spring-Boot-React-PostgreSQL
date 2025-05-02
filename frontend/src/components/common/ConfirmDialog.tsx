@@ -14,6 +14,9 @@ interface ConfirmDialogProps {
   content: string;
   onConfirm: () => void;
   onCancel: () => void;
+  confirmText?: string;
+  cancelText?: string;
+  confirmColor?: 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
 }
 
 const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
@@ -22,6 +25,9 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   content,
   onConfirm,
   onCancel,
+  confirmText = 'Confirm',
+  cancelText = 'Cancel',
+  confirmColor = 'error',
 }) => {
   return (
     <Dialog
@@ -37,9 +43,11 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
         </DialogContentText>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onCancel}>Cancel</Button>
-        <Button onClick={onConfirm} color="error" variant="contained" autoFocus>
-          Confirm
+        <Button onClick={onCancel} color="inherit">
+          {cancelText}
+        </Button>
+        <Button onClick={onConfirm} color={confirmColor} variant="contained" autoFocus>
+          {confirmText}
         </Button>
       </DialogActions>
     </Dialog>

@@ -1,23 +1,25 @@
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  TextField,
   Button,
+  TextField,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
   FormHelperText,
+  Box,
   CircularProgress,
-  Box
 } from '@mui/material';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { Formik, Form, Field, FieldProps } from 'formik';
+import * as Yup from 'yup';
 import { createTask, updateTask } from '../../store/taskSlice';
 import { fetchAllCategories } from '../../store/categorySlice';
 import { RootState } from '../../store';
@@ -27,204 +29,166 @@ import { TaskDto, Priority } from '../../types';
 interface TaskDialogProps {
   open: boolean;
   onClose: () => void;
-  task?: TaskDto | null;
+  task: TaskDto | null;
   onSave: () => void;
 }
 
+const TaskSchema = Yup.object().shape({
+  title: Yup.string().required('Title is required'),
+  description: Yup.string(),
+  dueDate: Yup.date().required('Due date is required'),
+  priority: Yup.string().required('Priority is required'),
+  categoryId: Yup.number().nullable(),
+});
+
 const TaskDialog: React.FC<TaskDialogProps> = ({ open, onClose, task, onSave }) => {
   const dispatch = useDispatch<AppDispatch>();
-  const { loading } = useSelector((state: RootState) => state.tasks);
   const { categories } = useSelector((state: RootState) => state.categories);
+  const { loading } = useSelector((state: RootState) => state.tasks);
   
-  // Use local state instead of formik for better control
-  const [title, setTitle] = useState(task?.title || '');
-  const [description, setDescription] = useState(task?.description || '');
-  const [dueDate, setDueDate] = useState<Date>(task?.dueDate ? new Date(task.dueDate) : new Date());
-  const [priority, setPriority] = useState<Priority>(task?.priority || Priority.MEDIUM);
-  const [categoryId, setCategoryId] = useState<string>(task?.categoryId !== undefined ? String(task.categoryId) : '');
-  const [errors, setErrors] = useState<{[key: string]: string}>({});
-  
-  // Reset form when task changes or dialog opens/closes
-  React.useEffect(() => {
-    if (task) {
-      setTitle(task.title);
-      setDescription(task.description || '');
-      setDueDate(new Date(task.dueDate));
-      setPriority(task.priority);
-      setCategoryId(task.categoryId !== undefined ? String(task.categoryId) : '');
-    } else {
-      setTitle('');
-      setDescription('');
-      setDueDate(new Date());
-      setPriority(Priority.MEDIUM);
-      setCategoryId('');
-    }
-    setErrors({});
-  }, [task, open]);
-  
-  // Load categories when component mounts
-  React.useEffect(() => {
+  useEffect(() => {
     dispatch(fetchAllCategories());
   }, [dispatch]);
   
-  const validate = (): boolean => {
-    const newErrors: {[key: string]: string} = {};
-    
-    if (!title.trim()) {
-      newErrors.title = 'Title is required';
-    }
-    
-    if (!dueDate) {
-      newErrors.dueDate = 'Due date is required';
-    }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  const initialValues: TaskDto = {
+    title: task?.title || '',
+    description: task?.description || '',
+    dueDate: task?.dueDate || new Date().toISOString(),
+    priority: task?.priority || Priority.MEDIUM,
+    completed: task?.completed || false,
+    categoryId: task?.categoryId || undefined,
   };
   
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!validate()) {
-      return;
-    }
-    
+  const handleSubmit = async (values: TaskDto) => {
     try {
-      // Convert categoryId from string to number or undefined
-      const categoryIdNum = categoryId ? Number(categoryId) : undefined;
-      
       if (task?.id) {
-        await dispatch(updateTask({ 
-          id: task.id, 
-          task: { 
-            title,
-            description,
-            priority,
-            dueDate: dueDate.toISOString(),
-            completed: task.completed || false,
-            categoryId: categoryIdNum
-          } 
-        })).unwrap();
+        await dispatch(updateTask({ id: task.id, task: values })).unwrap();
       } else {
-        await dispatch(createTask({ 
-          title,
-          description,
-          priority,
-          dueDate: dueDate.toISOString(),
-          completed: false,
-          categoryId: categoryIdNum
-        })).unwrap();
+        await dispatch(createTask(values)).unwrap();
       }
       onSave();
     } catch (error) {
-      // Error is handled by the reducer
+      console.error('Failed to save task:', error);
     }
   };
   
   return (
-    <Dialog 
-      open={open} 
-      onClose={onClose} 
-      maxWidth="sm" 
-      fullWidth
-    >
-      <form onSubmit={handleSubmit}>
-        <DialogTitle>{task ? 'Edit Task' : 'Create New Task'}</DialogTitle>
-        <DialogContent>
-          <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <TextField
-              autoFocus
-              fullWidth
-              id="title"
-              name="title"
-              label="Title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              error={!!errors.title}
-              helperText={errors.title}
-              autoComplete="off"
-            />
-            
-            <TextField
-              fullWidth
-              id="description"
-              name="description"
-              label="Description"
-              multiline
-              rows={4}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              autoComplete="off"
-            />
-            
-            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
-              <LocalizationProvider dateAdapter={AdapterDateFns}>
-                <DateTimePicker
-                  label="Due Date"
-                  value={dueDate}
-                  onChange={(value) => {
-                    if (value) setDueDate(value);
-                  }}
-                  slotProps={{
-                    textField: {
-                      fullWidth: true,
-                      error: !!errors.dueDate,
-                      helperText: errors.dueDate,
-                    },
-                  }}
-                />
-              </LocalizationProvider>
-              
-              <FormControl fullWidth>
-                <InputLabel id="priority-label">Priority</InputLabel>
-                <Select
-                  labelId="priority-label"
-                  id="priority"
-                  name="priority"
-                  value={priority}
-                  onChange={(e) => setPriority(e.target.value as Priority)}
-                  label="Priority"
-                >
-                  <MenuItem value={Priority.LOW}>Low</MenuItem>
-                  <MenuItem value={Priority.MEDIUM}>Medium</MenuItem>
-                  <MenuItem value={Priority.HIGH}>High</MenuItem>
-                </Select>
-              </FormControl>
-            </Box>
-            
-            <FormControl fullWidth>
-              <InputLabel id="category-label">Category</InputLabel>
-              <Select
-                labelId="category-label"
-                id="categoryId"
-                name="categoryId"
-                value={categoryId}
-                onChange={(e) => setCategoryId(e.target.value)}
-                label="Category"
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle>{task ? 'Edit Task' : 'Create Task'}</DialogTitle>
+      <Formik
+        initialValues={initialValues}
+        validationSchema={TaskSchema}
+        onSubmit={handleSubmit}
+        enableReinitialize
+      >
+        {({ isSubmitting, setFieldValue, values, errors, touched }) => (
+          <Form>
+            <DialogContent>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Field name="title">
+                  {({ field, meta }: FieldProps) => (
+                    <TextField
+                      {...field}
+                      label="Title"
+                      fullWidth
+                      error={meta.touched && Boolean(meta.error)}
+                      helperText={meta.touched && meta.error}
+                    />
+                  )}
+                </Field>
+                
+                <Field name="description">
+                  {({ field, meta }: FieldProps) => (
+                    <TextField
+                      {...field}
+                      label="Description"
+                      fullWidth
+                      multiline
+                      rows={4}
+                      error={meta.touched && Boolean(meta.error)}
+                      helperText={meta.touched && meta.error}
+                    />
+                  )}
+                </Field>
+                
+                <LocalizationProvider dateAdapter={AdapterDateFns}>
+                  <DateTimePicker
+                    label="Due Date"
+                    value={new Date(values.dueDate)}
+                    onChange={(date) => {
+                      if (date) {
+                        setFieldValue('dueDate', date.toISOString());
+                      }
+                    }}
+                    slotProps={{
+                      textField: {
+                        fullWidth: true,
+                        error: touched.dueDate && Boolean(errors.dueDate),
+                        helperText: touched.dueDate && errors.dueDate,
+                      },
+                    }}
+                  />
+                </LocalizationProvider>
+                
+                <Field name="priority">
+                  {({ field, meta }: FieldProps) => (
+                    <FormControl 
+                      fullWidth 
+                      error={meta.touched && Boolean(meta.error)}
+                    >
+                      <InputLabel>Priority</InputLabel>
+                      <Select
+                        {...field}
+                        label="Priority"
+                      >
+                        <MenuItem value={Priority.HIGH}>High</MenuItem>
+                        <MenuItem value={Priority.MEDIUM}>Medium</MenuItem>
+                        <MenuItem value={Priority.LOW}>Low</MenuItem>
+                      </Select>
+                      {meta.touched && meta.error && (
+                        <FormHelperText>{meta.error}</FormHelperText>
+                      )}
+                    </FormControl>
+                  )}
+                </Field>
+                
+                <Field name="categoryId">
+                  {({ field, meta }: FieldProps) => (
+                    <FormControl fullWidth>
+                      <InputLabel>Category</InputLabel>
+                      <Select
+                        {...field}
+                        label="Category"
+                        displayEmpty
+                        value={field.value || ''}
+                      >
+                        <MenuItem value="">No Category</MenuItem>
+                        {categories.map((category) => (
+                          <MenuItem key={category.id} value={category.id}>
+                            {category.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  )}
+                </Field>
+              </Box>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={onClose}>Cancel</Button>
+              <Button 
+                type="submit" 
+                variant="contained" 
+                color="primary"
+                disabled={isSubmitting || loading}
+                startIcon={loading && <CircularProgress size={20} />}
               >
-                <MenuItem value="">
-                  <em>None</em>
-                </MenuItem>
-                {categories.map((category) => (
-                  <MenuItem key={category.id} value={String(category.id)}>
-                    {category.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={onClose} type="button">Cancel</Button>
-          <Button 
-            type="submit" 
-            variant="contained" 
-            disabled={loading}
-          >
-            {loading ? <CircularProgress size={24} /> : task ? 'Update' : 'Create'}
-          </Button>
-        </DialogActions>
-      </form>
+                {task ? 'Update' : 'Create'}
+              </Button>
+            </DialogActions>
+          </Form>
+        )}
+      </Formik>
     </Dialog>
   );
 };

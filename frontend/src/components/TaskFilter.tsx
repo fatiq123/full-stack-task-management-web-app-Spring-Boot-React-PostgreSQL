@@ -5,7 +5,8 @@ import {
   FormControl, 
   InputLabel, 
   MenuItem, 
-  Select, 
+  Select,
+  SelectChangeEvent,
   TextField, 
   Typography, 
   Paper,
@@ -32,9 +33,14 @@ const TaskFilter: React.FC<TaskFilterProps> = ({ categories, onFilter }) => {
     sortDirection: 'asc'
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>) => {
+  const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFilter(prev => ({ ...prev, [name as string]: value }));
+    setFilter(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSelectChange = (e: SelectChangeEvent<any>) => {
+    const { name, value } = e.target;
+    setFilter(prev => ({ ...prev, [name]: value }));
   };
 
   const handleDateChange = (name: string, date: Date | null) => {
@@ -86,7 +92,7 @@ const TaskFilter: React.FC<TaskFilterProps> = ({ categories, onFilter }) => {
                 label="Search Tasks"
                 name="searchTerm"
                 value={filter.searchTerm || ''}
-                onChange={handleChange}
+                onChange={handleTextChange}
                 placeholder="Search by title or description"
               />
 
@@ -95,7 +101,7 @@ const TaskFilter: React.FC<TaskFilterProps> = ({ categories, onFilter }) => {
                 <Select
                   name="priority"
                   value={filter.priority || ''}
-                  onChange={handleChange}
+                  onChange={handleSelectChange}
                   label="Priority"
                 >
                   <MenuItem value="">All Priorities</MenuItem>
@@ -110,7 +116,7 @@ const TaskFilter: React.FC<TaskFilterProps> = ({ categories, onFilter }) => {
                 <Select
                   name="categoryId"
                   value={filter.categoryId || ''}
-                  onChange={handleChange}
+                  onChange={handleSelectChange}
                   label="Category"
                 >
                   <MenuItem value="">All Categories</MenuItem>
@@ -128,13 +134,19 @@ const TaskFilter: React.FC<TaskFilterProps> = ({ categories, onFilter }) => {
                 <InputLabel>Status</InputLabel>
                 <Select
                   name="completed"
-                  value={filter.completed === undefined ? '' : filter.completed}
-                  onChange={handleChange}
+                  value={filter.completed === undefined ? '' : (filter.completed ? 'true' : 'false')}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setFilter(prev => ({
+                      ...prev,
+                      completed: value === '' ? undefined : value === 'true'
+                    }));
+                  }}
                   label="Status"
                 >
                   <MenuItem value="">All Status</MenuItem>
-                  <MenuItem value={true}>Completed</MenuItem>
-                  <MenuItem value={false}>Pending</MenuItem>
+                  <MenuItem value="true">Completed</MenuItem>
+                  <MenuItem value="false">Pending</MenuItem>
                 </Select>
               </FormControl>
 
@@ -163,7 +175,7 @@ const TaskFilter: React.FC<TaskFilterProps> = ({ categories, onFilter }) => {
                 <Select
                   name="sortBy"
                   value={filter.sortBy || 'dueDate'}
-                  onChange={handleChange}
+                  onChange={handleSelectChange}
                   label="Sort By"
                   startAdornment={<SortIcon sx={{ mr: 1 }} />}
                 >
@@ -179,7 +191,7 @@ const TaskFilter: React.FC<TaskFilterProps> = ({ categories, onFilter }) => {
                 <Select
                   name="sortDirection"
                   value={filter.sortDirection || 'asc'}
-                  onChange={handleChange}
+                  onChange={handleSelectChange}
                   label="Sort Direction"
                 >
                   <MenuItem value="asc">Ascending</MenuItem>
@@ -204,4 +216,3 @@ const TaskFilter: React.FC<TaskFilterProps> = ({ categories, onFilter }) => {
 };
 
 export default TaskFilter;
-
