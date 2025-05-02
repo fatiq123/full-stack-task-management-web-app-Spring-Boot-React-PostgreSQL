@@ -7,11 +7,11 @@ import {
   MenuItem, 
   Select, 
   TextField, 
-  Grid, 
   Typography, 
   Paper,
   IconButton,
-  Collapse
+  Collapse,
+  Stack
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -79,8 +79,8 @@ const TaskFilter: React.FC<TaskFilterProps> = ({ categories, onFilter }) => {
 
       <Collapse in={open}>
         <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={6} md={4}>
+          <Stack spacing={2}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
               <TextField
                 fullWidth
                 label="Search Tasks"
@@ -89,9 +89,7 @@ const TaskFilter: React.FC<TaskFilterProps> = ({ categories, onFilter }) => {
                 onChange={handleChange}
                 placeholder="Search by title or description"
               />
-            </Grid>
 
-            <Grid item xs={12} sm={6} md={4}>
               <FormControl fullWidth>
                 <InputLabel>Priority</InputLabel>
                 <Select
@@ -106,9 +104,7 @@ const TaskFilter: React.FC<TaskFilterProps> = ({ categories, onFilter }) => {
                   <MenuItem value={Priority.LOW}>Low</MenuItem>
                 </Select>
               </FormControl>
-            </Grid>
 
-            <Grid item xs={12} sm={6} md={4}>
               <FormControl fullWidth>
                 <InputLabel>Category</InputLabel>
                 <Select
@@ -125,9 +121,9 @@ const TaskFilter: React.FC<TaskFilterProps> = ({ categories, onFilter }) => {
                   ))}
                 </Select>
               </FormControl>
-            </Grid>
+            </Stack>
 
-            <Grid item xs={12} sm={6} md={4}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
               <FormControl fullWidth>
                 <InputLabel>Status</InputLabel>
                 <Select
@@ -141,9 +137,7 @@ const TaskFilter: React.FC<TaskFilterProps> = ({ categories, onFilter }) => {
                   <MenuItem value={false}>Pending</MenuItem>
                 </Select>
               </FormControl>
-            </Grid>
 
-            <Grid item xs={12} sm={6} md={4}>
               <LocalizationProvider dateAdapter={AdapterDateFns}>
                 <DatePicker
                   label="Start Date"
@@ -152,9 +146,7 @@ const TaskFilter: React.FC<TaskFilterProps> = ({ categories, onFilter }) => {
                   slotProps={{ textField: { fullWidth: true } }}
                 />
               </LocalizationProvider>
-            </Grid>
 
-            <Grid item xs={12} sm={6} md={4}>
               <LocalizationProvider dateAdapter={AdapterDateFns}>
                 <DatePicker
                   label="End Date"
@@ -163,9 +155,9 @@ const TaskFilter: React.FC<TaskFilterProps> = ({ categories, onFilter }) => {
                   slotProps={{ textField: { fullWidth: true } }}
                 />
               </LocalizationProvider>
-            </Grid>
+            </Stack>
 
-            <Grid item xs={12} sm={6} md={6}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
               <FormControl fullWidth>
                 <InputLabel>Sort By</InputLabel>
                 <Select
@@ -181,9 +173,7 @@ const TaskFilter: React.FC<TaskFilterProps> = ({ categories, onFilter }) => {
                   <MenuItem value="createdAt">Created Date</MenuItem>
                 </Select>
               </FormControl>
-            </Grid>
 
-            <Grid item xs={12} sm={6} md={6}>
               <FormControl fullWidth>
                 <InputLabel>Sort Direction</InputLabel>
                 <Select
@@ -196,19 +186,17 @@ const TaskFilter: React.FC<TaskFilterProps> = ({ categories, onFilter }) => {
                   <MenuItem value="desc">Descending</MenuItem>
                 </Select>
               </FormControl>
-            </Grid>
+            </Stack>
 
-            <Grid item xs={12}>
-              <Box display="flex" justifyContent="flex-end" gap={2}>
-                <Button variant="outlined" onClick={handleReset}>
-                  Reset
-                </Button>
-                <Button type="submit" variant="contained" color="primary">
-                  Apply Filters
-                </Button>
-              </Box>
-            </Grid>
-          </Grid>
+            <Box display="flex" justifyContent="flex-end" gap={2}>
+              <Button variant="outlined" onClick={handleReset}>
+                Reset
+              </Button>
+              <Button type="submit" variant="contained" color="primary">
+                Apply Filters
+              </Button>
+            </Box>
+          </Stack>
         </Box>
       </Collapse>
     </Paper>
@@ -216,3 +204,4 @@ const TaskFilter: React.FC<TaskFilterProps> = ({ categories, onFilter }) => {
 };
 
 export default TaskFilter;
+

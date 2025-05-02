@@ -1,94 +1,81 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { Provider } from 'react-redux';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { SnackbarProvider } from 'notistack';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 
-import { store } from './store';
+// Layout
+import Layout from './components/layout/Layout';
+
+// Auth
 import Login from './components/auth/Login';
 import Register from './components/auth/Register';
-import Dashboard from './components/dashboard/Dashboard';
-import TaskList from './components/tasks/TaskList';
+import ProtectedRoute from './components/auth/ProtectedRoute';
+
+// Dashboard
+import EnhancedDashboard from './components/dashboard/EnhancedDashboard';
+
+// Tasks
+import EnhancedTaskList from './components/tasks/EnhancedTaskList';
+import TaskDetail from './components/tasks/TaskDetail';
+
+// Categories
 import CategoryList from './components/categories/CategoryList';
-import UserProfile from './components/profile/UserProfile';
-import PrivateRoute from './components/common/PrivateRoute';
+
+// Profile
+import Profile from './components/profile/Profile';
 
 const theme = createTheme({
   palette: {
+    mode: 'light',
     primary: {
       main: '#1976d2',
     },
     secondary: {
       main: '#f50057',
     },
-    background: {
-      default: '#f5f5f5',
-    },
   },
   typography: {
-    fontFamily: [
-      'Roboto',
-      'Arial',
-      'sans-serif',
-    ].join(','),
+    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
   },
   components: {
     MuiButton: {
       styleOverrides: {
         root: {
-          borderRadius: 8,
           textTransform: 'none',
-          fontWeight: 600,
-        },
-      },
-    },
-    MuiPaper: {
-      styleOverrides: {
-        root: {
-          borderRadius: 8,
-        },
-      },
-    },
-    MuiCard: {
-      styleOverrides: {
-        root: {
-          borderRadius: 8,
-          boxShadow: '0 4px 12px 0 rgba(0,0,0,0.05)',
         },
       },
     },
   },
 });
 
-const App: React.FC = () => {
+function App() {
   return (
-    <Provider store={store}>
-      <ThemeProvider theme={theme}>
-        <LocalizationProvider dateAdapter={AdapterDateFns}>
-          <SnackbarProvider maxSnack={3}>
-            <CssBaseline />
-            <Router>
-              <Routes>
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/" element={<PrivateRoute />}>
-                  <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/tasks" element={<TaskList />} />
-                  <Route path="/categories" element={<CategoryList />} />
-                  <Route path="/profile" element={<UserProfile />} />
-                </Route>
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-            </Router>
-          </SnackbarProvider>
-        </LocalizationProvider>
-      </ThemeProvider>
-    </Provider>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <LocalizationProvider dateAdapter={AdapterDateFns}>
+        <SnackbarProvider maxSnack={3}>
+          <Router>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+                <Route index element={<Navigate to="/dashboard" replace />} />
+                <Route path="dashboard" element={<EnhancedDashboard />} />
+                <Route path="tasks" element={<EnhancedTaskList />} />
+                <Route path="tasks/:id" element={<TaskDetail />} />
+                <Route path="categories" element={<CategoryList />} />
+                <Route path="profile" element={<Profile />} />
+              </Route>
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </Router>
+        </SnackbarProvider>
+      </LocalizationProvider>
+    </ThemeProvider>
   );
-};
+}
 
 export default App;

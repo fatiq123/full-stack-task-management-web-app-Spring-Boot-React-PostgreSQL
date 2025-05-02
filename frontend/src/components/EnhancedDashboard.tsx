@@ -3,7 +3,6 @@ import {
   Box,
   Card,
   CardContent,
-  Grid,
   Typography,
   Paper,
   List,
@@ -11,7 +10,8 @@ import {
   ListItemText,
   Divider,
   Chip,
-  LinearProgress
+  LinearProgress,
+  Stack
 } from '@mui/material';
 import {
   Chart as ChartJS,
@@ -126,10 +126,11 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({ dashboardData }) 
 
   return (
     <Box sx={{ flexGrow: 1, mt: 3 }}>
-      <Grid container spacing={3}>
-        {/* Completion Rate */}
-        <Grid item xs={12} md={6}>
-          <Card>
+      <Stack spacing={3}>
+        {/* Top Stats Row */}
+        <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+          {/* Completion Rate */}
+          <Card sx={{ flex: 1 }}>
             <CardContent>
               <Typography variant="h6" gutterBottom>
                 Task Completion Rate
@@ -154,11 +155,9 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({ dashboardData }) 
               </Typography>
             </CardContent>
           </Card>
-        </Grid>
 
-        {/* Average Completion Time */}
-        <Grid item xs={12} md={6}>
-          <Card>
+          {/* Average Completion Time */}
+          <Card sx={{ flex: 1 }}>
             <CardContent>
               <Typography variant="h6" gutterBottom>
                 Average Completion Time
@@ -171,11 +170,12 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({ dashboardData }) 
               </Typography>
             </CardContent>
           </Card>
-        </Grid>
+        </Stack>
 
-        {/* Tasks by Category */}
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 2, height: '100%' }}>
+        {/* Charts Row */}
+        <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+          {/* Tasks by Category */}
+          <Paper sx={{ p: 2, flex: 1 }}>
             <Typography variant="h6" gutterBottom>
               Tasks by Category
             </Typography>
@@ -183,11 +183,9 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({ dashboardData }) 
               <Pie data={categoryChartData} options={{ maintainAspectRatio: false }} />
             </Box>
           </Paper>
-        </Grid>
 
-        {/* Tasks by Priority */}
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 2, height: '100%' }}>
+          {/* Tasks by Priority */}
+          <Paper sx={{ p: 2, flex: 1 }}>
             <Typography variant="h6" gutterBottom>
               Tasks by Priority
             </Typography>
@@ -195,61 +193,58 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({ dashboardData }) 
               <Pie data={priorityChartData} options={{ maintainAspectRatio: false }} />
             </Box>
           </Paper>
-        </Grid>
+        </Stack>
 
         {/* Monthly Task Creation */}
-        <Grid item xs={12}>
-          <Paper sx={{ p: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              Monthly Task Creation
-            </Typography>
-            <Box sx={{ height: 300 }}>
-              <Bar 
-                data={monthlyChartData} 
-                options={{ 
-                  maintainAspectRatio: false,
-                  scales: {
-                    y: {
-                      beginAtZero: true,
-                      ticks: {
-                        precision: 0
-                      }
+        <Paper sx={{ p: 2 }}>
+          <Typography variant="h6" gutterBottom>
+            Monthly Task Creation
+          </Typography>
+          <Box sx={{ height: 300 }}>
+            <Bar 
+              data={monthlyChartData} 
+              options={{ 
+                maintainAspectRatio: false,
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                    ticks: {
+                      precision: 0
                     }
                   }
-                }} 
-              />
-            </Box>
-          </Paper>
-        </Grid>
+                }
+              }} 
+            />
+          </Box>
+        </Paper>
 
         {/* Task Completion Trend */}
-        <Grid item xs={12}>
-          <Paper sx={{ p: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              Task Completion Trend (Last 6 Months)
-            </Typography>
-            <Box sx={{ height: 300 }}>
-              <Line 
-                data={completionTrendData} 
-                options={{ 
-                  maintainAspectRatio: false,
-                  scales: {
-                    y: {
-                      beginAtZero: true,
-                      ticks: {
-                        precision: 0
-                      }
+        <Paper sx={{ p: 2 }}>
+          <Typography variant="h6" gutterBottom>
+            Task Completion Trend (Last 6 Months)
+          </Typography>
+          <Box sx={{ height: 300 }}>
+            <Line 
+              data={completionTrendData} 
+              options={{ 
+                maintainAspectRatio: false,
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                    ticks: {
+                      precision: 0
                     }
                   }
-                }} 
-              />
-            </Box>
-          </Paper>
-        </Grid>
+                }
+              }} 
+            />
+          </Box>
+        </Paper>
 
-        {/* Recent Tasks */}
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 2 }}>
+        {/* Lists Row */}
+        <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+          {/* Recent Tasks */}
+          <Paper sx={{ p: 2, flex: 1 }}>
             <Typography variant="h6" gutterBottom>
               Recent Tasks
             </Typography>
@@ -294,11 +289,9 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({ dashboardData }) 
               )}
             </List>
           </Paper>
-        </Grid>
 
-        {/* Upcoming Deadlines */}
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 2 }}>
+          {/* Upcoming Deadlines */}
+          <Paper sx={{ p: 2, flex: 1 }}>
             <Typography variant="h6" gutterBottom>
               Upcoming Deadlines
             </Typography>
@@ -343,8 +336,8 @@ const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({ dashboardData }) 
               )}
             </List>
           </Paper>
-        </Grid>
-      </Grid>
+        </Stack>
+      </Stack>
     </Box>
   );
 };

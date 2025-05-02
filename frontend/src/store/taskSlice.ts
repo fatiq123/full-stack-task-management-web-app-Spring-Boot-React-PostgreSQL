@@ -1,19 +1,25 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { taskApi } from '../services/api';
-import { TaskDto } from '../types';
+import { TaskDto, TaskFilterDto } from '../types';
 
 interface TaskState {
   tasks: TaskDto[];
-  currentTask: TaskDto | null;
+  filteredTasks: TaskDto[];
+  selectedTask: TaskDto | null;
   loading: boolean;
   error: string | null;
+  totalPages: number;
+  totalElements: number;
 }
 
 const initialState: TaskState = {
   tasks: [],
-  currentTask: null,
+  filteredTasks: [],
+  selectedTask: null,
   loading: false,
   error: null,
+  totalPages: 0,
+  totalElements: 0
 };
 
 export const fetchAllTasks = createAsyncThunk(
@@ -24,18 +30,6 @@ export const fetchAllTasks = createAsyncThunk(
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch tasks');
-    }
-  }
-);
-
-export const fetchTasksByPriority = createAsyncThunk(
-  'tasks/fetchByPriority',
-  async (_, { rejectWithValue }) => {
-    try {
-      const response = await taskApi.getTasksByPriority();
-      return response.data;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to fetch tasks by priority');
     }
   }
 );
@@ -136,16 +130,44 @@ export const toggleTaskCompletion = createAsyncThunk(
   }
 );
 
+export const filterTasks = createAsyncThunk(
+  'tasks/filter',
+  async ({ filter, page, size }: { filter: TaskFilterDto, page: number, size: number }, { rejectWithValue }) => {
+    try {
+      const response = await taskApi.filterTasks(filter, page, size);
+      return {
+        content: response.data.content,
+        totalPages: response.data.totalPages,
+        totalElements: response.data.totalElements
+      };
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to filter tasks');
+    }
+  }
+);
+
+export const getUpcomingTasks = createAsyncThunk(
+  'tasks/upcoming',
+  async (days: number = 7, { rejectWithValue }) => {
+    try {
+      const response = await taskApi.getUpcomingTasks(days);
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch upcoming tasks');
+    }
+  }
+);
+
 const taskSlice = createSlice({
   name: 'tasks',
   initialState,
   reducers: {
-    clearCurrentTask: (state) => {
-      state.currentTask = null;
+    clearSelectedTask: (state) => {
+      state.selectedTask = null;
     },
-    clearError: (state) => {
+    clearTaskError: (state) => {
       state.error = null;
-    },
+    }
   },
   extraReducers: (builder) => {
     builder
@@ -159,20 +181,6 @@ const taskSlice = createSlice({
         state.tasks = action.payload;
       })
       .addCase(fetchAllTasks.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-      })
-      
-      // Fetch tasks by priority
-      .addCase(fetchTasksByPriority.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(fetchTasksByPriority.fulfilled, (state, action: PayloadAction<TaskDto[]>) => {
-        state.loading = false;
-        state.tasks = action.payload;
-      })
-      .addCase(fetchTasksByPriority.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })
@@ -226,7 +234,7 @@ const taskSlice = createSlice({
       })
       .addCase(fetchTaskById.fulfilled, (state, action: PayloadAction<TaskDto>) => {
         state.loading = false;
-        state.currentTask = action.payload;
+        state.selectedTask = action.payload;
       })
       .addCase(fetchTaskById.rejected, (state, action) => {
         state.loading = false;
@@ -258,7 +266,9 @@ const taskSlice = createSlice({
         if (index !== -1) {
           state.tasks[index] = action.payload;
         }
-        state.currentTask = action.payload;
+        if (state.selectedTask && state.selectedTask.id === action.payload.id) {
+          state.selectedTask = action.payload;
+        }
       })
       .addCase(updateTask.rejected, (state, action) => {
         state.loading = false;
@@ -273,8 +283,8 @@ const taskSlice = createSlice({
       .addCase(deleteTask.fulfilled, (state, action: PayloadAction<number>) => {
         state.loading = false;
         state.tasks = state.tasks.filter(task => task.id !== action.payload);
-        if (state.currentTask?.id === action.payload) {
-          state.currentTask = null;
+        if (state.selectedTask && state.selectedTask.id === action.payload) {
+          state.selectedTask = null;
         }
       })
       .addCase(deleteTask.rejected, (state, action) => {
@@ -293,16 +303,47 @@ const taskSlice = createSlice({
         if (index !== -1) {
           state.tasks[index] = action.payload;
         }
-        if (state.currentTask?.id === action.payload.id) {
-          state.currentTask = action.payload;
+        if (state.selectedTask && state.selectedTask.id === action.payload.id) {
+          state.selectedTask = action.payload;
         }
       })
       .addCase(toggleTaskCompletion.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
+      })
+      
+      // Filter tasks
+      .addCase(filterTasks.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(filterTasks.fulfilled, (state, action) => {
+        state.loading = false;
+        state.filteredTasks = action.payload.content;
+        state.totalPages = action.payload.totalPages;
+        state.totalElements = action.payload.totalElements;
+      })
+      .addCase(filterTasks.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      
+      // Get upcoming tasks
+      .addCase(getUpcomingTasks.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(getUpcomingTasks.fulfilled, (state, action: PayloadAction<TaskDto[]>) => {
+        state.loading = false;
+        state.tasks = action.payload;
+      })
+      .addCase(getUpcomingTasks.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
       });
-  },
+  }
 });
 
-export const { clearCurrentTask, clearError } = taskSlice.actions;
+export const { clearSelectedTask, clearTaskError } = taskSlice.actions;
+
 export default taskSlice.reducer;
