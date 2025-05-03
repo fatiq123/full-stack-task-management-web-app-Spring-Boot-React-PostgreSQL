@@ -14,35 +14,35 @@ import EnhancedDashboardView from '../EnhancedDashboard';
 const EnhancedDashboard: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { data, loading, error } = useSelector((state: RootState) => state.dashboard);
-  
+
   useEffect(() => {
     dispatch(fetchDashboardData());
   }, [dispatch]);
-  
+
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-        <CircularProgress />
-      </Box>
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+          <CircularProgress />
+        </Box>
     );
   }
-  
+
   if (error) {
     return (
-      <Alert severity="error" sx={{ mt: 2 }}>
-        {error}
-      </Alert>
+        <Alert severity="error" sx={{ mt: 2 }}>
+          {error}
+        </Alert>
     );
   }
-  
+
   return (
-    <Box sx={{ flexGrow: 1 }}>
-      <Typography variant="h4" gutterBottom>
-        Enhanced Dashboard
-      </Typography>
-      
-      {data && <EnhancedDashboardView dashboardData={data} />}
-    </Box>
+      <Box sx={{ flexGrow: 1 }}>
+        <Typography variant="h4" gutterBottom>
+          Enhanced Dashboard
+        </Typography>
+
+        {data && <EnhancedDashboardView dashboardData={data} />}
+      </Box>
   );
 };
 

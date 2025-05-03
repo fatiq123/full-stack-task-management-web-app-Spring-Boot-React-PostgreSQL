@@ -40,7 +40,16 @@ const TaskFilter: React.FC<TaskFilterProps> = ({ categories, onFilter }) => {
 
   const handleSelectChange = (e: SelectChangeEvent<any>) => {
     const { name, value } = e.target;
-    setFilter(prev => ({ ...prev, [name]: value }));
+    // If value is empty string and name is priority, set it to undefined
+    if (name === 'priority' && value === '') {
+      setFilter(prev => {
+        const newFilter = { ...prev };
+        delete newFilter.priority;
+        return newFilter;
+      });
+    } else {
+      setFilter(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleDateChange = (name: string, date: Date | null) => {
@@ -216,3 +225,4 @@ const TaskFilter: React.FC<TaskFilterProps> = ({ categories, onFilter }) => {
 };
 
 export default TaskFilter;
+
