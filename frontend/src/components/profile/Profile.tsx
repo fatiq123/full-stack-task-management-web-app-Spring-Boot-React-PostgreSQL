@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   Box,
@@ -11,12 +11,21 @@ import {
   Stack,
   CircularProgress,
   Alert,
+  IconButton,
+  Chip,
 } from '@mui/material';
 import { Formik, Form, Field, FieldProps } from 'formik';
 import * as Yup from 'yup';
-import { fetchUserProfile, updateUserProfile, changePassword } from '../../store/userSlice';
+import { 
+  fetchUserProfile, 
+  updateUserProfile, 
+  changePassword,
+  uploadProfilePicture
+} from '../../store/userSlice';
 import { RootState } from '../../store';
 import { AppDispatch } from '../../store';
+import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
+import EditIcon from '@mui/icons-material/Edit';
 
 const ProfileSchema = Yup.object().shape({
   name: Yup.string().required('Name is required'),
@@ -35,17 +44,15 @@ const PasswordSchema = Yup.object().shape({
 
 const Profile: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { loading, error, message } = useSelector((state: RootState) => state.user);
-  const [userData, setUserData] = useState<any>(null);
+  const { loading, error, message, user } = useSelector((state: RootState) => state.user);
+  const { user: authUser } = useSelector((state: RootState) => state.auth);
   const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   useEffect(() => {
     dispatch(fetchUserProfile())
       .unwrap()
-      .then((userData) => {
-        setUserData(userData);
-      })
       .catch((error) => {
         console.error('Error fetching user profile:', error);
       });
@@ -54,8 +61,8 @@ const Profile: React.FC = () => {
   const handleProfileUpdate = async (values: any) => {
     await dispatch(updateUserProfile(values))
       .unwrap()
-      .then((updatedUser) => {
-        setUserData(updatedUser);
+      .catch((error) => {
+        console.error('Error updating profile:', error);
       });
   };
   
@@ -73,8 +80,27 @@ const Profile: React.FC = () => {
       setPasswordSuccess(null);
     }
   };
+
+  const handleProfilePictureClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      try {
+        await dispatch(uploadProfilePicture(file)).unwrap();
+        // Force refresh profile after upload
+        dispatch(fetchUserProfile());
+      } catch (error) {
+        console.error('Error uploading profile picture:', error);
+      }
+    }
+  };
   
-  if (loading && !userData) {
+  if (loading && !user) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
         <CircularProgress />
@@ -102,34 +128,82 @@ const Profile: React.FC = () => {
       
       <Stack spacing={3}>
         <Paper sx={{ p: 3 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-            <Avatar
-              sx={{ width: 80, height: 80, mr: 2, bgcolor: 'primary.main' }}
-            >
-              {userData?.name?.charAt(0) || 'U'}
-            </Avatar>
-            <Box>
-              <Typography variant="h5">{userData?.name}</Typography>
-              <Typography variant="body1" color="text.secondary">
-                {userData?.email}
+          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: { xs: 'center', sm: 'flex-start' }, mb: 3 }}>
+            <Box sx={{ position: 'relative', mb: { xs: 2, sm: 0 }, mr: { sm: 3 } }}>
+              <Avatar
+                src={user?.profilePicture}
+                sx={{
+                  width: 120,
+                  height: 120,
+                  bgcolor: 'primary.main',
+                  border: '4px solid #fff',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                  objectFit: 'cover'
+                }}
+                imgProps={{
+                  style: {
+                    objectFit: 'cover',
+                    width: '100%',
+                    height: '100%'
+                  }
+                }}
+              >
+                {user?.name?.charAt(0) || 'U'}
+              </Avatar>
+              <IconButton 
+                sx={{ 
+                  position: 'absolute', 
+                  bottom: 0, 
+                  right: 0, 
+                  bgcolor: 'secondary.main',
+                  '&:hover': { bgcolor: 'secondary.dark' },
+                  color: 'white'
+                }}
+                onClick={handleProfilePictureClick}
+              >
+                <PhotoCameraIcon />
+              </IconButton>
+              <input
+                type="file"
+                ref={fileInputRef}
+                style={{ display: 'none' }}
+                accept="image/*"
+                onChange={handleFileChange}
+              />
+            </Box>
+            <Box sx={{ textAlign: { xs: 'center', sm: 'left' } }}>
+              <Typography variant="h5" sx={{ fontWeight: 'bold' }}>{user?.name}</Typography>
+              <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
+                {user?.email}
               </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Username: {userData?.username}
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                Username: {user?.username}
               </Typography>
+              {authUser?.roles?.includes('ROLE_ADMIN') && (
+                <Chip 
+                  label="Admin" 
+                  color="secondary" 
+                  size="small" 
+                  sx={{ fontWeight: 'bold' }}
+                />
+              )}
             </Box>
           </Box>
           
-          <Divider sx={{ my: 2 }} />
+          <Divider sx={{ my: 3 }} />
           
-          <Typography variant="h6" gutterBottom>
-            Update Profile
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+            <Typography variant="h6" sx={{ flexGrow: 1 }}>
+              Personal Information
+            </Typography>
+            <EditIcon color="primary" fontSize="small" />
+          </Box>
           
-          {userData && (
+          {user && (
             <Formik
               initialValues={{
-                name: userData.name || '',
-                email: userData.email || '',
+                name: user.name || '',
+                email: user.email || '',
               }}
               validationSchema={ProfileSchema}
               onSubmit={handleProfileUpdate}
@@ -137,41 +211,47 @@ const Profile: React.FC = () => {
             >
               {({ isSubmitting }) => (
                 <Form>
-                  <Stack spacing={2}>
-                    <Field name="name">
-                      {({ field, meta }: FieldProps) => (
-                        <TextField
-                          {...field}
-                          label="Name"
-                          fullWidth
-                          error={meta.touched && Boolean(meta.error)}
-                          helperText={meta.touched && meta.error}
-                        />
-                      )}
-                    </Field>
+                  <Stack spacing={2} direction={{ xs: 'column', md: 'row' }}>
+                    <Box sx={{ width: '100%' }}>
+                      <Field name="name">
+                        {({ field, meta }: FieldProps) => (
+                          <TextField
+                            {...field}
+                            label="Name"
+                            fullWidth
+                            error={meta.touched && Boolean(meta.error)}
+                            helperText={meta.touched && meta.error}
+                            variant="outlined"
+                          />
+                        )}
+                      </Field>
+                    </Box>
                     
-                    <Field name="email">
-                      {({ field, meta }: FieldProps) => (
-                        <TextField
-                          {...field}
-                          label="Email"
-                          fullWidth
-                          error={meta.touched && Boolean(meta.error)}
-                          helperText={meta.touched && meta.error}
-                        />
-                      )}
-                    </Field>
-                    
-                    <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                      <Button
-                        type="submit"
-                        variant="contained"
-                        disabled={isSubmitting || loading}
-                      >
-                        {isSubmitting || loading ? 'Saving...' : 'Save Changes'}
-                      </Button>
+                    <Box sx={{ width: '100%' }}>
+                      <Field name="email">
+                        {({ field, meta }: FieldProps) => (
+                          <TextField
+                            {...field}
+                            label="Email"
+                            fullWidth
+                            error={meta.touched && Boolean(meta.error)}
+                            helperText={meta.touched && meta.error}
+                            variant="outlined"
+                          />
+                        )}
+                      </Field>
                     </Box>
                   </Stack>
+                  
+                  <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                    <Button
+                      type="submit"
+                      variant="contained"
+                      disabled={isSubmitting || loading}
+                    >
+                      {isSubmitting || loading ? 'Saving...' : 'Save Changes'}
+                    </Button>
+                  </Box>
                 </Form>
               )}
             </Formik>
@@ -179,9 +259,12 @@ const Profile: React.FC = () => {
         </Paper>
         
         <Paper sx={{ p: 3 }}>
-          <Typography variant="h6" gutterBottom>
-            Change Password
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+            <Typography variant="h6" sx={{ flexGrow: 1 }}>
+              Security
+            </Typography>
+            <EditIcon color="primary" fontSize="small" />
+          </Box>
           
           {passwordSuccess && (
             <Alert severity="success" sx={{ mb: 2 }}>
@@ -206,56 +289,65 @@ const Profile: React.FC = () => {
           >
             {({ isSubmitting }) => (
               <Form>
-                <Stack spacing={2}>
-                  <Field name="currentPassword">
-                    {({ field, meta }: FieldProps) => (
-                      <TextField
-                        {...field}
-                        type="password"
-                        label="Current Password"
-                        fullWidth
-                        error={meta.touched && Boolean(meta.error)}
-                        helperText={meta.touched && meta.error}
-                      />
-                    )}
-                  </Field>
+                <Stack spacing={2} direction={{ xs: 'column', md: 'row' }}>
+                  <Box sx={{ width: '100%' }}>
+                    <Field name="currentPassword">
+                      {({ field, meta }: FieldProps) => (
+                        <TextField
+                          {...field}
+                          type="password"
+                          label="Current Password"
+                          fullWidth
+                          error={meta.touched && Boolean(meta.error)}
+                          helperText={meta.touched && meta.error}
+                          variant="outlined"
+                        />
+                      )}
+                    </Field>
+                  </Box>
                   
-                  <Field name="newPassword">
-                    {({ field, meta }: FieldProps) => (
-                      <TextField
-                        {...field}
-                        type="password"
-                        label="New Password"
-                        fullWidth
-                        error={meta.touched && Boolean(meta.error)}
-                        helperText={meta.touched && meta.error}
-                      />
-                    )}
-                  </Field>
+                  <Box sx={{ width: '100%' }}>
+                    <Field name="newPassword">
+                      {({ field, meta }: FieldProps) => (
+                        <TextField
+                          {...field}
+                          type="password"
+                          label="New Password"
+                          fullWidth
+                          error={meta.touched && Boolean(meta.error)}
+                          helperText={meta.touched && meta.error}
+                          variant="outlined"
+                        />
+                      )}
+                    </Field>
+                  </Box>
                   
-                  <Field name="confirmPassword">
-                    {({ field, meta }: FieldProps) => (
-                      <TextField
-                        {...field}
-                        type="password"
-                        label="Confirm New Password"
-                        fullWidth
-                        error={meta.touched && Boolean(meta.error)}
-                        helperText={meta.touched && meta.error}
-                      />
-                    )}
-                  </Field>
-                  
-                  <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                    <Button
-                      type="submit"
-                      variant="contained"
-                      disabled={isSubmitting}
-                    >
-                      {isSubmitting ? 'Changing...' : 'Change Password'}
-                    </Button>
+                  <Box sx={{ width: '100%' }}>
+                    <Field name="confirmPassword">
+                      {({ field, meta }: FieldProps) => (
+                        <TextField
+                          {...field}
+                          type="password"
+                          label="Confirm New Password"
+                          fullWidth
+                          error={meta.touched && Boolean(meta.error)}
+                          helperText={meta.touched && meta.error}
+                          variant="outlined"
+                        />
+                      )}
+                    </Field>
                   </Box>
                 </Stack>
+                
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? 'Changing...' : 'Change Password'}
+                  </Button>
+                </Box>
               </Form>
             )}
           </Formik>
@@ -266,4 +358,6 @@ const Profile: React.FC = () => {
 };
 
 export default Profile;
+
+
 

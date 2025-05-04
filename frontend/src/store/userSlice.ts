@@ -52,65 +52,94 @@ export const changePassword = createAsyncThunk(
   }
 );
 
-const userSlice = createSlice({
-  name: 'user',
-  initialState,
-  reducers: {
-    clearUserError: (state) => {
-      state.error = null;
-    },
-    clearUserMessage: (state) => {
-      state.message = null;
+export const uploadProfilePicture = createAsyncThunk(
+    'user/uploadProfilePicture',
+    async (file: File, { rejectWithValue }) => {
+        try {
+            const response = await userApi.uploadProfilePicture(file);
+            return response.data;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.message || 'Failed to upload profile picture');
+        }
     }
-  },
-  extraReducers: (builder) => {
-    builder
-      // Fetch profile
-      .addCase(fetchUserProfile.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(fetchUserProfile.fulfilled, (state, action: PayloadAction<UserDto>) => {
-        state.loading = false;
-        state.user = action.payload;
-      })
-      .addCase(fetchUserProfile.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-      })
-      
-      // Update profile
-      .addCase(updateUserProfile.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-        state.message = null;
-      })
-      .addCase(updateUserProfile.fulfilled, (state, action: PayloadAction<UserDto>) => {
-        state.loading = false;
-        state.user = action.payload;
-        state.message = 'Profile updated successfully';
-      })
-      .addCase(updateUserProfile.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-      })
-      
-      // Change password
-      .addCase(changePassword.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-        state.message = null;
-      })
-      .addCase(changePassword.fulfilled, (state, action: PayloadAction<{ message: string }>) => {
-        state.loading = false;
-        state.message = action.payload.message;
-      })
-      .addCase(changePassword.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-      });
-  }
+);
+
+const userSlice = createSlice({
+    name: 'user',
+    initialState,
+    reducers: {
+        clearUserError: (state) => {
+            state.error = null;
+        },
+        clearUserMessage: (state) => {
+            state.message = null;
+        }
+    },
+    extraReducers: (builder) => {
+        builder
+            // Fetch profile
+            .addCase(fetchUserProfile.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(fetchUserProfile.fulfilled, (state, action: PayloadAction<UserDto>) => {
+                state.loading = false;
+                state.user = action.payload;
+            })
+            .addCase(fetchUserProfile.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload as string;
+            })
+
+            // Update profile
+            .addCase(updateUserProfile.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+                state.message = null;
+            })
+            .addCase(updateUserProfile.fulfilled, (state, action: PayloadAction<UserDto>) => {
+                state.loading = false;
+                state.user = action.payload;
+                state.message = 'Profile updated successfully';
+            })
+            .addCase(updateUserProfile.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload as string;
+            })
+
+            // Change password
+            .addCase(changePassword.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+                state.message = null;
+            })
+            .addCase(changePassword.fulfilled, (state, action: PayloadAction<{ message: string }>) => {
+                state.loading = false;
+                state.message = action.payload.message;
+            })
+            .addCase(changePassword.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload as string;
+            })
+
+            // Upload profile picture
+            .addCase(uploadProfilePicture.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+                state.message = null;
+            })
+            .addCase(uploadProfilePicture.fulfilled, (state, action: PayloadAction<UserDto>) => {
+                state.loading = false;
+                state.user = action.payload;
+                state.message = 'Profile picture uploaded successfully';
+            })
+            .addCase(uploadProfilePicture.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload as string;
+            });
+    }
 });
+
 
 export const { clearUserError, clearUserMessage } = userSlice.actions;
 

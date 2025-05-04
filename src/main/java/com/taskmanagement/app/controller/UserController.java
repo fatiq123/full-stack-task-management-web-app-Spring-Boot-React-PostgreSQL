@@ -6,10 +6,14 @@ import com.taskmanagement.app.security.UserDetailsImpl;
 import com.taskmanagement.app.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 
 @CrossOrigin(origins = "*")
 @RestController
@@ -37,6 +41,14 @@ public class UserController {
     public ResponseEntity<MessageResponse> changePassword(@Valid @RequestBody PasswordChangeRequest passwordChangeRequest, @AuthenticationPrincipal UserDetailsImpl userDetails) {
         userService.changePassword(passwordChangeRequest.getCurrentPassword(), passwordChangeRequest.getNewPassword(), userDetails.getId());
         return ResponseEntity.ok(new MessageResponse("Password changed successfully"));
+    }
+    
+    @PostMapping(value = "/profile-picture", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<UserDto> uploadProfilePicture(
+            @RequestParam("file") MultipartFile file,
+            @AuthenticationPrincipal UserDetailsImpl userDetails) throws IOException {
+        return ResponseEntity.ok(userService.uploadProfilePicture(file, userDetails.getId()));
     }
 
     public static class PasswordChangeRequest {

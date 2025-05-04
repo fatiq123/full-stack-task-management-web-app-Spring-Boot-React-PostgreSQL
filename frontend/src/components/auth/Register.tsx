@@ -12,6 +12,9 @@ import {
   Avatar,
   CircularProgress,
   Alert,
+  FormControlLabel,
+  Checkbox,
+  FormHelperText,
 } from '@mui/material';
 import { PersonAddOutlined as PersonAddOutlinedIcon } from '@mui/icons-material';
 import { Formik, Form, Field, FieldProps } from 'formik';
@@ -32,6 +35,7 @@ const RegisterSchema = Yup.object().shape({
     .min(6, 'Password must be at least 6 characters')
     .required('Password is required'),
   name: Yup.string().required('Name is required'),
+  isAdmin: Yup.boolean(),
 });
 
 const Register: React.FC = () => {
@@ -46,9 +50,17 @@ const Register: React.FC = () => {
     }
   }, [isAuthenticated, navigate]);
   
-  const handleSubmit = async (values: { username: string; email: string; password: string; name: string }) => {
+  const handleSubmit = async (values: { username: string; email: string; password: string; name: string; isAdmin: boolean }) => {
     try {
-      await dispatch(register(values)).unwrap();
+      const roles = values.isAdmin ? ['admin'] : undefined;
+      await dispatch(register({
+        username: values.username,
+        email: values.email,
+        password: values.password,
+        name: values.name,
+        roles: roles ? roles : undefined
+      })).unwrap();
+      
       // Registration successful
       setRegistrationSuccess('Registration successful! Redirecting to login...');
       setTimeout(() => {
@@ -77,13 +89,14 @@ const Register: React.FC = () => {
             flexDirection: 'column',
             alignItems: 'center',
             width: '100%',
+            borderRadius: 2,
           }}
         >
-          <Avatar sx={{ m: 1, bgcolor: 'secondary.main' }}>
-            <PersonAddOutlinedIcon />
+          <Avatar sx={{ m: 1, bgcolor: 'secondary.main', width: 56, height: 56 }}>
+            <PersonAddOutlinedIcon fontSize="large" />
           </Avatar>
-          <Typography component="h1" variant="h5">
-            Sign up
+          <Typography component="h1" variant="h5" sx={{ mb: 2, fontWeight: 'bold' }}>
+            Create Account
           </Typography>
           
           {error && (
@@ -99,11 +112,11 @@ const Register: React.FC = () => {
           )}
           
           <Formik
-            initialValues={{ username: '', email: '', password: '', name: '' }}
+            initialValues={{ username: '', email: '', password: '', name: '', isAdmin: false }}
             validationSchema={RegisterSchema}
             onSubmit={handleSubmit}
           >
-            {({ isSubmitting }) => (
+            {({ isSubmitting, touched, errors, values, handleChange }) => (
               <Form style={{ width: '100%', marginTop: '1rem' }}>
                 <Field name="name">
                   {({ field, meta }: FieldProps) => (
@@ -115,6 +128,7 @@ const Register: React.FC = () => {
                       autoFocus
                       error={meta.touched && Boolean(meta.error)}
                       helperText={meta.touched && meta.error}
+                      variant="outlined"
                     />
                   )}
                 </Field>
@@ -128,6 +142,7 @@ const Register: React.FC = () => {
                       label="Username"
                       error={meta.touched && Boolean(meta.error)}
                       helperText={meta.touched && meta.error}
+                      variant="outlined"
                     />
                   )}
                 </Field>
@@ -142,6 +157,7 @@ const Register: React.FC = () => {
                       type="email"
                       error={meta.touched && Boolean(meta.error)}
                       helperText={meta.touched && meta.error}
+                      variant="outlined"
                     />
                   )}
                 </Field>
@@ -156,22 +172,39 @@ const Register: React.FC = () => {
                       type="password"
                       error={meta.touched && Boolean(meta.error)}
                       helperText={meta.touched && meta.error}
+                      variant="outlined"
                     />
                   )}
                 </Field>
+                
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={values.isAdmin}
+                      onChange={handleChange}
+                      name="isAdmin"
+                      color="primary"
+                    />
+                  }
+                  label="Register as Admin"
+                  sx={{ mt: 1, mb: 1 }}
+                />
+                {touched.isAdmin && errors.isAdmin && (
+                  <FormHelperText error>{errors.isAdmin}</FormHelperText>
+                )}
                 
                 <Button
                   type="submit"
                   fullWidth
                   variant="contained"
-                  sx={{ mt: 3, mb: 2 }}
+                  sx={{ mt: 3, mb: 2, py: 1.5, fontSize: '1rem' }}
                   disabled={isSubmitting || loading}
                 >
                   {loading ? <CircularProgress size={24} /> : 'Sign Up'}
                 </Button>
                 
                 <Box sx={{ textAlign: 'center' }}>
-                  <Link component={RouterLink} to="/login" variant="body2">
+                  <Link component={RouterLink} to="/login" variant="body2" sx={{ color: 'primary.main' }}>
                     {"Already have an account? Sign In"}
                   </Link>
                 </Box>
@@ -185,3 +218,4 @@ const Register: React.FC = () => {
 };
 
 export default Register;
+

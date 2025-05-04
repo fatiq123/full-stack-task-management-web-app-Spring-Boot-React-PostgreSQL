@@ -70,6 +70,15 @@ export const userApi = {
   changePassword: (passwordData: PasswordChangeRequest) => {
     return axiosInstance.post('/users/change-password', passwordData);
   },
+  uploadProfilePicture: (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return axiosInstance.post('/users/profile-picture', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
 };
 
 // Task API

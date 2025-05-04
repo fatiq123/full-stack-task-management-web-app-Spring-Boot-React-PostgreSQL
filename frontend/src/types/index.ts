@@ -9,6 +9,7 @@ export interface SignupRequest {
   email: string;
   password: string;
   name: string;
+  roles?: string[];
 }
 
 export interface JwtResponse {
@@ -26,6 +27,7 @@ export interface UserDto {
   username?: string;
   email?: string;
   name?: string;
+  profilePicture?: string;
 }
 
 export interface PasswordChangeRequest {

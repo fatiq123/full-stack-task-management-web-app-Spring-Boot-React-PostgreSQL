@@ -32,6 +32,7 @@ public class User {
 
     private String name;
     
+    @Column(columnDefinition = "TEXT")
     private String profilePicture;
 
     @ManyToMany(fetch = FetchType.EAGER)
