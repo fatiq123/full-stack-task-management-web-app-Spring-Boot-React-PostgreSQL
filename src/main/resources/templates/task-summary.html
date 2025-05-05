@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Weekly Task Summary</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #337ab7;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px 5px 0 0;
+        }
+        .content {
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+        }
+        .footer {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #777;
+            text-align: center;
+        }
+        .stats-container {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .stat-box {
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            padding: 15px;
+            text-align: center;
+            width: 45%;
+            margin-bottom: 10px;
+        }
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .stat-label {
+            color: #666;
+        }
+        .completed {
+            color: #5cb85c;
+        }
+        .pending {
+            color: #f0ad4e;
+        }
+        .overdue {
+            color: #d9534f;
+        }
+        .total {
+            color: #337ab7;
+        }
+        .upcoming-tasks {
+            margin-top: 30px;
+        }
+        .task-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .task-item:last-child {
+            border-bottom: none;
+        }
+        .priority-high {
+            color: #d9534f;
+            font-weight: bold;
+        }
+        .priority-medium {
+            color: #f0ad4e;
+            font-weight: bold;
+        }
+        .priority-low {
+            color: #5bc0de;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>Your Weekly Task Summary</h2>
+    </div>
+    <div class="content">
+        <p>Hello <span th:text="${userName}">User</span>,</p>
+        
+        <p>Here's a summary of your tasks for the week:</p>
+        
+        <div class="stats-container">
+            <div class="stat-box">
+                <div class="stat-label">Total Tasks</div>
+                <div class="stat-number total" th:text="${totalTasks}">10</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Completed</div>
+                <div class="stat-number completed" th:text="${completedTasks}">5</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Pending</div>
+                <div class="stat-number pending" th:text="${pendingTasks}">4</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Overdue</div>
+                <div class="stat-number overdue" th:text="${overdueTasks}">1</div>
+            </div>
+        </div>
+        
+        <div class="upcoming-tasks">
+            <h3>Upcoming Tasks</h3>
+            <div th:if="${upcomingTasks.empty}">
+                <p>You have no upcoming tasks for the next 7 days.</p>
+            </div>
+            <div th:unless="${upcomingTasks.empty}">
+                <div class="task-item" th:each="task : ${upcomingTasks}">
+                    <h4 th:text="${task.title}">Task Title</h4>
+                    <p>
+                        <strong>Due:</strong> <span th:text="${#temporals.format(task.dueDate, 'MMM dd, yyyy HH:mm')}">May 15, 2025 14:30</span> | 
+                        <strong>Priority:</strong> 
+                        <span th:class="${task.priority == 'HIGH' ? 'priority-high' : (task.priority == 'MEDIUM' ? 'priority-medium' : 'priority-low')}" 
+                              th:text="${task.priority}">MEDIUM</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <p>Log in to your account to manage your tasks and stay productive!</p>
+        
+        <p>Thank you for using our Task Management System!</p>
+    </div>
+    <div class="footer">
+        <p>This is an automated message. Please do not reply to this email.</p>
+        <p>&copy; 2025 Task Management System</p>
+    </div>
+</body>
+</html>

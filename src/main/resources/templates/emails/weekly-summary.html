@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weekly Task Summary</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #673AB7;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px 5px 0 0;
+        }
+        .content {
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+        }
+        .stats-container {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .stat-box {
+            display: inline-block;
+            width: 45%;
+            text-align: center;
+            padding: 10px;
+            margin: 5px;
+            border-radius: 5px;
+        }
+        .total {
+            background-color: #2196F3;
+            color: white;
+        }
+        .completed {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .pending {
+            background-color: #FF9800;
+            color: white;
+        }
+        .overdue {
+            background-color: #F44336;
+            color: white;
+        }
+        .upcoming-tasks {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .task-item {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        .task-item:last-child {
+            border-bottom: none;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #777;
+        }
+        .button {
+            display: inline-block;
+            background-color: #673AB7;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Weekly Task Summary</h1>
+    </div>
+    <div class="content">
+        <p>Hello <strong th:text="${username}">User</strong>,</p>
+        
+        <p>Here is your weekly task summary:</p>
+        
+        <div class="stats-container">
+            <h3>Task Statistics:</h3>
+            <div class="stat-box total">
+                <h4>Total Tasks</h4>
+                <p th:text="${totalTasks}">0</p>
+            </div>
+            <div class="stat-box completed">
+                <h4>Completed</h4>
+                <p th:text="${completedTasks}">0</p>
+            </div>
+            <div class="stat-box pending">
+                <h4>Pending</h4>
+                <p th:text="${pendingTasks}">0</p>
+            </div>
+            <div class="stat-box overdue">
+                <h4>Overdue</h4>
+                <p th:text="${overdueTasks}">0</p>
+            </div>
+        </div>
+        
+        <div class="upcoming-tasks">
+            <h3>Upcoming Tasks:</h3>
+            <div th:if="${#lists.isEmpty(upcomingTasks)}">
+                <p>No upcoming tasks for the next 7 days.</p>
+            </div>
+            <div th:each="task : ${upcomingTasks}" class="task-item">
+                <p><strong th:text="${task.title}">Task Title</strong> (Due: <span th:text="${task.dueDate}">Due Date</span>)</p>
+                <p>Priority: <span th:text="${task.priority}">Priority</span></p>
+            </div>
+        </div>
+        
+        <a th:href="${dashboardUrl}" href="#" class="button">View Dashboard</a>
+    </div>
+    <div class="footer">
+        <p>This is an automated message from Task Management App.</p>
+        <p>&copy; 2025 Task Management App. All rights reserved.</p>
+    </div>
+</body>
+</html>

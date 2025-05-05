@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Task Completed</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #5cb85c;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px 5px 0 0;
+        }
+        .content {
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+        }
+        .footer {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #777;
+            text-align: center;
+        }
+        .success-icon {
+            font-size: 48px;
+            color: #5cb85c;
+            text-align: center;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>Task Completed</h2>
+    </div>
+    <div class="content">
+        <p>Hello <span th:text="${userName}">User</span>,</p>
+        
+        <p>Congratulations! You have successfully completed the following task:</p>
+        
+        <div class="success-icon">✓</div>
+        
+        <h3 th:text="${taskTitle}">Task Title</h3>
+        
+        <p>Great job on completing this task! Keep up the good work.</p>
+        
+        <p>You can log in to your account to view your task history and manage your remaining tasks.</p>
+        
+        <p>Thank you for using our Task Management System!</p>
+    </div>
+    <div class="footer">
+        <p>This is an automated message. Please do not reply to this email.</p>
+        <p>&copy; 2025 Task Management System</p>
+    </div>
+</body>
+</html>

@@ -11,12 +11,13 @@ import java.util.List;
 
 @Repository
 public interface TaskReminderRepository extends JpaRepository<TaskReminder, Long> {
-    List<TaskReminder> findByUserAndSent(User user, boolean sent);
+    List<TaskReminder> findByUserOrderByReminderTimeAsc(User user);
     
-    @Query("SELECT tr FROM TaskReminder tr WHERE tr.sent = false AND tr.reminderTime <= ?1")
-    List<TaskReminder> findPendingReminders(LocalDateTime currentTime);
+    @Query("SELECT r FROM TaskReminder r WHERE r.user = ?1 AND r.task.id = ?2")
+    List<TaskReminder> findByUserAndTaskId(User user, Long taskId);
     
-    List<TaskReminder> findByTaskId(Long taskId);
+    @Query("SELECT r FROM TaskReminder r WHERE r.reminderTime <= ?1 AND r.sent = false")
+    List<TaskReminder> findPendingReminders(LocalDateTime now);
     
     void deleteByTaskId(Long taskId);
 }

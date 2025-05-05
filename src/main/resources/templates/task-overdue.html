@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Task Overdue</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #d9534f;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px 5px 0 0;
+        }
+        .content {
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+        }
+        .footer {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #777;
+            text-align: center;
+        }
+        .warning-icon {
+            font-size: 48px;
+            color: #d9534f;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .task-details {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            border-left: 4px solid #d9534f;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>Task Overdue</h2>
+    </div>
+    <div class="content">
+        <p>Hello <span th:text="${userName}">User</span>,</p>
+        
+        <p>We wanted to remind you that the following task is now overdue:</p>
+        
+        <div class="warning-icon">⚠</div>
+        
+        <div class="task-details">
+            <h3 th:text="${taskTitle}">Task Title</h3>
+            <p><strong>Due Date:</strong> <span th:text="${dueDate}">May 1, 2025 14:30</span></p>
+        </div>
+        
+        <p>Please log in to your account to update the task status or adjust the due date if needed.</p>
+        
+        <p>Thank you for using our Task Management System!</p>
+    </div>
+    <div class="footer">
+        <p>This is an automated message. Please do not reply to this email.</p>
+        <p>&copy; 2025 Task Management System</p>
+    </div>
+</body>
+</html>

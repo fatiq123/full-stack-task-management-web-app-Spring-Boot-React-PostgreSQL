@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Task Deleted</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #d9534f;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px 5px 0 0;
+        }
+        .content {
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+        }
+        .footer {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #777;
+            text-align: center;
+        }
+        .delete-icon {
+            font-size: 48px;
+            color: #d9534f;
+            text-align: center;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>Task Deleted</h2>
+    </div>
+    <div class="content">
+        <p>Hello <span th:text="${userName}">User</span>,</p>
+        
+        <p>The following task has been deleted from your task management system:</p>
+        
+        <div class="delete-icon">✗</div>
+        
+        <h3 th:text="${taskTitle}">Task Title</h3>
+        
+        <p>If you did not delete this task or if this was done in error, please log in to your account to create a new task.</p>
+        
+        <p>Thank you for using our Task Management System!</p>
+    </div>
+    <div class="footer">
+        <p>This is an automated message. Please do not reply to this email.</p>
+        <p>&copy; 2025 Task Management System</p>
+    </div>
+</body>
+</html>

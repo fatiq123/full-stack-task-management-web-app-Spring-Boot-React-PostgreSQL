@@ -4,6 +4,7 @@ import com.taskmanagement.app.dto.UserDto;
 import com.taskmanagement.app.exception.ResourceNotFoundException;
 import com.taskmanagement.app.model.User;
 import com.taskmanagement.app.repository.UserRepository;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -60,6 +61,20 @@ public class UserService {
         userRepository.save(user);
     }
     
+    @Autowired
+    private java.nio.file.Path fileStorageLocation;
+    
+    @PostConstruct
+    public void init() {
+        try {
+            // Create the uploads directory if it doesn't exist
+            this.fileStorageLocation = java.nio.file.Paths.get("uploads").toAbsolutePath().normalize();
+            java.nio.file.Files.createDirectories(this.fileStorageLocation);
+        } catch (Exception ex) {
+            throw new RuntimeException("Could not create the directory where the uploaded files will be stored.", ex);
+        }
+    }
+    
     @Transactional
     public UserDto uploadProfilePicture(MultipartFile file, Long userId) throws IOException {
         User user = getUserById(userId);
@@ -67,17 +82,20 @@ public class UserService {
         // Process the image to reduce its size if needed
         byte[] imageBytes = file.getBytes();
         
-        // If the image is too large, we'll store a URL reference instead of the full Base64
-        // For this example, we'll use a simple approach to handle smaller images
+        // If the image is too large, we'll store a URL reference and save the file to disk
         if (imageBytes.length > 100000) { // If larger than ~100KB
-            // For larger images, store a URL or reference instead of the full Base64 string
-            // This is a simplified approach - in production you might want to use cloud storage
             String fileExtension = getFileExtension(file.getOriginalFilename());
-            String profilePicUrl = "user_" + userId + "_profile" + fileExtension;
-            user.setProfilePicture(profilePicUrl);
+            String fileName = "user_" + userId + "_profile" + fileExtension;
             
-            // Here you would typically save the actual file to disk or cloud storage
-            // For this example, we'll just store the URL reference
+            // Create the file path
+            java.nio.file.Path targetLocation = this.fileStorageLocation.resolve(fileName);
+            
+            // Save the file to disk
+            java.nio.file.Files.write(targetLocation, imageBytes);
+            
+            // Store the URL reference in the database
+            String profilePicUrl = "/uploads/" + fileName;
+            user.setProfilePicture(profilePicUrl);
         } else {
             // For smaller images, we can store as Base64
             String base64Image = "data:" + file.getContentType() + ";base64," + 

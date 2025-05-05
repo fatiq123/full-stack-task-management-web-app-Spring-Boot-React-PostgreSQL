@@ -86,6 +86,9 @@ public class TaskService {
         return convertToDto(task);
     }
 
+    @Autowired
+    private EmailService emailService;
+
     @Transactional
     public TaskDto createTask(TaskDto taskDto) {
         User user = getUserById(taskDto.getUserId());
@@ -105,7 +108,12 @@ public class TaskService {
         }
         
         Task savedTask = taskRepository.save(task);
-        return convertToDto(savedTask);
+        TaskDto savedTaskDto = convertToDto(savedTask);
+        
+        // Send email notification for task creation
+        emailService.sendTaskCreationNotification(savedTaskDto, user.getId());
+        
+        return savedTaskDto;
     }
 
     @Transactional
@@ -134,7 +142,9 @@ public class TaskService {
         }
         
         Task updatedTask = taskRepository.save(task);
-        return convertToDto(updatedTask);
+        TaskDto updatedTaskDto = convertToDto(updatedTask);
+        
+        return updatedTaskDto;
     }
 
     @Transactional
@@ -148,7 +158,13 @@ public class TaskService {
             throw new ResourceNotFoundException("Task not found with id: " + id);
         }
         
+        // Create a DTO of the task before deleting it for the email notification
+        TaskDto taskDto = convertToDto(task);
+        
         taskRepository.delete(task);
+        
+        // Send email notification for task deletion
+        emailService.sendTaskDeletedNotification(taskDto, userId);
     }
 
     @Transactional
@@ -162,10 +178,17 @@ public class TaskService {
             throw new ResourceNotFoundException("Task not found with id: " + id);
         }
         
-        task.setCompleted(!task.isCompleted());
+        boolean wasCompleted = task.isCompleted();
+        task.setCompleted(!wasCompleted);
         Task updatedTask = taskRepository.save(task);
+        TaskDto updatedTaskDto = convertToDto(updatedTask);
         
-        return convertToDto(updatedTask);
+        // Send email notification if task was marked as completed
+        if (!wasCompleted && updatedTask.isCompleted()) {
+            emailService.sendTaskCompletedNotification(updatedTaskDto, userId);
+        }
+        
+        return updatedTaskDto;
     }
     
     // New methods for filtering and sorting

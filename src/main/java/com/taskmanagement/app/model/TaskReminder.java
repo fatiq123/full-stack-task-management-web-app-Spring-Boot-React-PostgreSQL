@@ -26,11 +26,10 @@ public class TaskReminder {
     private User user;
 
     @Column(nullable = false)
-    private LocalDateTime reminderTime;
+    private String reminderType; // "EMAIL", "NOTIFICATION"
 
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private ReminderType reminderType;
+    private LocalDateTime reminderTime;
 
     @Column(nullable = false)
     private boolean sent = false;
@@ -41,9 +40,5 @@ public class TaskReminder {
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
-    }
-
-    public enum ReminderType {
-        EMAIL, NOTIFICATION
     }
 }

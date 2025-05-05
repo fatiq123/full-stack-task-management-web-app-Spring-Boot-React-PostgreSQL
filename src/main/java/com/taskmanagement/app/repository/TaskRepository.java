@@ -30,6 +30,12 @@ public interface TaskRepository extends JpaRepository<Task, Long>, JpaSpecificat
     // New methods for filtering and sorting
     Page<Task> findByUser(User user, Pageable pageable);
     
+    // Added for TaskReminderService
+    List<Task> findByUser(User user);
+    
+    // Added for TaskReminderService
+    List<Task> findByUserAndCompleted(User user, boolean completed);
+    
     @Query("SELECT t FROM Task t WHERE t.user = ?1 AND " +
            "(?2 IS NULL OR LOWER(t.title) LIKE LOWER(CONCAT('%', ?2, '%')) OR LOWER(t.description) LIKE LOWER(CONCAT('%', ?2, '%')))")
     Page<Task> findByUserAndSearchTerm(User user, String searchTerm, Pageable pageable);
